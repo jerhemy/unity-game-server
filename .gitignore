@@ -5,6 +5,7 @@
 [Bb]uilds/
 [Ll]ogs/
 [Aa]ssets/AssetStoreTools*
+Plugins/Editor/
 
 # Visual Studio cache directory
 .vs/
