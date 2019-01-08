@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Net;
 using UnityEngine;
 
 public class EventManager : MonoBehaviour
 {
-    private Dictionary<short, Action<EventParam>> _events;
+    private Dictionary<string, Action<BasePacket>> _events;
     
     private static EventManager eventManager;
 
@@ -34,13 +35,13 @@ public class EventManager : MonoBehaviour
     {
         if (_events == null)
         {
-            _events = new Dictionary<short, Action<EventParam>>();
+            _events = new Dictionary<string, Action<BasePacket>>();
         }
     }
 
-    public static void Subscribe(short eventName, Action<EventParam> listener)
+    public static void Subscribe(string eventName, Action<BasePacket> listener)
     {
-        Action<EventParam> thisEvent;
+        Action<BasePacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Add more event to the existing one
@@ -57,10 +58,10 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Unsubscribe(short eventName, Action<EventParam> listener)
+    public static void Unsubscribe(string eventName, Action<BasePacket> listener)
     {
         if (eventManager == null) return;
-        Action<EventParam> thisEvent;
+        Action<BasePacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Remove event from the existing one
@@ -71,9 +72,9 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Publish(short eventName, EventParam eventParam)
+    public static void Publish(string eventName, BasePacket eventParam)
     {
-        Action<EventParam> thisEvent = null;
+        Action<BasePacket> thisEvent = null;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             thisEvent.Invoke(eventParam);

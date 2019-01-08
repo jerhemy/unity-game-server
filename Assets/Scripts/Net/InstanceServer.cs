@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Net;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,7 +21,7 @@ namespace Server.Net
         }
     }
     
-    public class Server : MonoBehaviour
+    public class InstanceServer : MonoBehaviour
     {
         private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clientList;
 
@@ -50,11 +52,11 @@ namespace Server.Net
         public ClientConnected OnClientConnect;
         public ClientDisconnected OnClientDisconnect;
         public ClientMessage OnClientMessage;
-        
+                
         void Start()
         {
             _clientList = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
-
+            
             server = UnityNetcode.CreateServer(PublicIP, Port, 1UL, MaxClients, privateKey);
 
             server.ClientConnectedEvent.AddListener(Server_OnClientConnected);
@@ -94,7 +96,7 @@ namespace Server.Net
             }
         }
 
-        private void Server_SendMessage(RemoteClient client, ByteBuffer payload, QosType type)
+        private void Server_SendMessage(RemoteClient client, ByteBuffer payload, QosType type = QosType.Reliable)
         {
             ReliableEndpoint reliableEndpoint;
             if (!_clientList.TryGetValue(client, out reliableEndpoint)) return;
@@ -111,7 +113,8 @@ namespace Server.Net
             reliableEndpoint.ReceiveCallback = (message, messageSize) =>
             {
                 // this will be called with individual messages, so do whatever message receive processing you want here.
-                OnClientMessage?.Invoke(client, payload);
+                //OnClientMessage?.Invoke(client, payload);
+                EventManager.Publish("UpdatePlayer", new BasePacket {clientId = client.ClientID} );
             };
 
             reliableEndpoint.ReceivePacket(payload.InternalBuffer, payload.InternalBuffer.Length);
@@ -119,13 +122,27 @@ namespace Server.Net
 
         private void Server_OnClientConnected(RemoteClient client)
         {
-            _clientList.TryAdd(client, new ReliableEndpoint());
-            OnClientConnect?.Invoke(client);
+            Debug.Log($"{DateTime.Now} [Instance] Client Connected");
+            
+            if(!_clientList.TryAdd(client, new ReliableEndpoint()))
+            {
+                // Couldnt Add Client, Disconnect
+                server.Disconnect(client);
+            }
+            
+            // Create Player in Scene
+            
+            // Register Client with GameObject
+            
+            
+            //EventManager.Publish("CreatePlayer", new BasePacket {clientId = client.ClientID} );
         }
 
         private void Server_OnClientDisconnected(RemoteClient client)
         {
-            OnClientDisconnect?.Invoke(client);
+            Debug.Log($"{DateTime.Now} [Instance] Client Disconnected");
+            EventManager.Publish("RemovePlayer", new BasePacket {clientId = client.ClientID} );
+            //OnClientDisconnect?.Invoke(client);
             //_clientList.TryRemove(client, out);
         }
     }

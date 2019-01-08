@@ -7,6 +7,9 @@
 [Aa]ssets/AssetStoreTools*
 Plugins/Editor/
 
+# Rider cache directory
+.idea/
+
 # Visual Studio cache directory
 .vs/
 

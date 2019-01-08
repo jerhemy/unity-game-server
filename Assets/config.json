@@ -1,0 +1,8 @@
+{
+	"zone": "rivervale",
+	"ip": "127.0.0.1",
+	"port": 4000,
+	"protocolId": 1,
+	"maxClients": 256,
+	"privateKey": "abcdefghijklmnop"
+}
