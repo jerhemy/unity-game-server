@@ -9,4 +9,23 @@ namespace Net
         public byte[] buffer;
         public int size;
     }
+    
+    public interface INetworkPacket
+    {
+        byte[] GetBytes();
+        
+    }
+
+    public struct OP_EntityMove : INetworkPacket
+    {
+        float x;
+        float y;
+        float z;
+        float direction;
+        
+        public byte[] GetBytes()
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }

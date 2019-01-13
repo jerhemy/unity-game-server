@@ -20,8 +20,7 @@ namespace MMO.Entity
         void Start()
         {
             _isDead = false;
-            hateList = new SortedDictionary<long, int>();
-            
+            hateList = new SortedDictionary<long, int>();          
         }
 
 
