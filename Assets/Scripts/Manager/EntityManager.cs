@@ -212,7 +212,7 @@ public class EntityManager : MonoBehaviour
         //EventManager.Publish("");
     }
     
-    public void RemovePlayer(BasePacket packet)
+    public void RemovePlayer(INetworkPacket packet)
     {
         // Load Player Details from Persistant Storage
         //_entity.TryRemove(packet.clientId, out _);  
@@ -221,7 +221,7 @@ public class EntityManager : MonoBehaviour
         //EventManager.Publish("");
     }
     
-    public void UpdatePlayer(BasePacket packet)
+    public void UpdatePlayer(INetworkPacket packet)
     {
         // Load Player Details from Persistant Storage
             

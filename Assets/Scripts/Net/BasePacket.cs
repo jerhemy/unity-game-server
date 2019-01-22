@@ -1,31 +1,33 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace Net
 {
-    public struct BasePacket
+    public class NetworkPacket : INetworkPacket
     {
-        public ulong clientId;
-        public byte[] buffer;
-        public int size;
+        private readonly short _type;
+        private byte[] buffer;
+        
+        public NetworkPacket(byte[] data)
+        {
+            _type = BitConverter.ToInt16(data, 0);
+            Buffer.BlockCopy(data, 2, buffer, 0, data.Length);
+        }
+        
+        public OP_CODE GetType()
+        {
+            return (OP_CODE) _type;
+        }
+    }
+    
+    public enum OP_CODE
+    {
+        ENITTY_UPDATE = 0x001
     }
     
     public interface INetworkPacket
     {
-        byte[] GetBytes();
-        
-    }
-
-    public struct OP_EntityMove : INetworkPacket
-    {
-        float x;
-        float y;
-        float z;
-        float direction;
-        
-        public byte[] GetBytes()
-        {
-            throw new System.NotImplementedException();
-        }
-    }
+        OP_CODE GetType();   
+    }    
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class EventManager : MonoBehaviour
 {
-    private Dictionary<string, Action<BasePacket>> _events;
+    private Dictionary<string, Action<INetworkPacket>> _events;
     
     private static EventManager eventManager;
 
@@ -35,13 +35,13 @@ public class EventManager : MonoBehaviour
     {
         if (_events == null)
         {
-            _events = new Dictionary<string, Action<BasePacket>>();
+            _events = new Dictionary<string, Action<INetworkPacket>>();
         }
     }
 
-    public static void Subscribe(string eventName, Action<BasePacket> listener)
+    public static void Subscribe(string eventName, Action<INetworkPacket> listener)
     {
-        Action<BasePacket> thisEvent;
+        Action<INetworkPacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Add more event to the existing one
@@ -58,10 +58,10 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Unsubscribe(string eventName, Action<BasePacket> listener)
+    public static void Unsubscribe(string eventName, Action<INetworkPacket> listener)
     {
         if (eventManager == null) return;
-        Action<BasePacket> thisEvent;
+        Action<INetworkPacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Remove event from the existing one
@@ -72,9 +72,9 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Publish(string eventName, BasePacket eventParam)
+    public static void Publish(string eventName, INetworkPacket eventParam)
     {
-        Action<BasePacket> thisEvent = null;
+        Action<INetworkPacket> thisEvent = null;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             thisEvent.Invoke(eventParam);
