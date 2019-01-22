@@ -6,6 +6,7 @@
 [Ll]ogs/
 [Aa]ssets/AssetStoreTools*
 Plugins/Editor/
+[Aa]ssetBundles/
 
 # Rider cache directory
 .idea/
