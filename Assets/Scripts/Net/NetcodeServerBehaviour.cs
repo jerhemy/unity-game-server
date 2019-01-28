@@ -33,7 +33,16 @@ namespace Server.Net
 	
     public abstract class NetcodeServerBehaviour : MonoBehaviour
     {
-	    private ulong clientID = 0;
+
+        byte[] privateKey = new byte[]
+        {
+          0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
+          0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
+          0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
+          0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
+        };
+
+        private ulong clientID = 0;
 	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
 
@@ -50,7 +59,7 @@ namespace Server.Net
 
 	    public void StartServer(ServerConfig config)
 	    {
-		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
+		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, privateKey);
 		    Debug.Log($"{GenerateToken(config)}");
 	    }
 	    
@@ -164,8 +173,8 @@ namespace Server.Net
 			    addressList,		// IPEndPoint[] list of addresses the client can connect to. Must have at least one and no more than 32.
 			    60,		// in how many seconds will the token expire
 			    60,		// how long it takes until a connection attempt times out and the client tries the next server.
-			    sequenceNumber,		// ulong token sequence number used to uniquely identify a connect token.
-			    cID,		// ulong ID used to uniquely identify this client
+			    1UL,		// ulong token sequence number used to uniquely identify a connect token.
+			    1UL,		// ulong ID used to uniquely identify this client
 			    userData		// byte[], up to 256 bytes of arbitrary user data (available to the server as RemoteClient.UserData)
 		    );
 
