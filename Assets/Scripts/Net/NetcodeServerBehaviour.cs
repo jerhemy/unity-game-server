@@ -21,6 +21,8 @@ namespace Server.Net
 
 		public string privateKey;
 
+		
+		
 		public byte[] GetKey()
 		{
 			var pkey = privateKey.Substring(0, 16);
@@ -31,6 +33,8 @@ namespace Server.Net
 	
     public abstract class NetcodeServerBehaviour : MonoBehaviour
     {
+	    private ulong clientID = 0;
+	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
 
 	    private NetcodeServer _server;
@@ -47,6 +51,7 @@ namespace Server.Net
 	    public void StartServer(ServerConfig config)
 	    {
 		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
+		    Debug.Log($"{GenerateToken(config)}");
 	    }
 	    
 	    public void StartServer(string ipAddress, int port, ulong protocolID, int maxClients, byte[] privateKey)
@@ -124,6 +129,12 @@ namespace Server.Net
 			    _server.Dispose();
 	    }
 
+	    public string GenerateToken(ServerConfig config)
+	    {
+		    var token = GenerateToken(config.protocolId, config.privateKey, config.ip, config.port);
+		    return Convert.ToBase64String(token);
+	    }
+	    
 	    public byte[] GenerateToken(ulong protocolID, string serverKey, string ipAddress, int port)
 	    {
 		    var sequenceNumber = ulong.Parse(DateTime.Now.ToString("hhmmssffffff"));
@@ -145,16 +156,16 @@ namespace Server.Net
 			    privateKey		// byte[32], must be the same as the private key passed to the Server constructor
 		    );
 
-		    const ulong clientID = 1UL;
+		    var cID = clientID + 1;
 		    var userData = new byte[256];
 		    
 		    // ClientID will be AccountID as only clients will be connecting to the World Server
 		    return tokenFactory.GenerateConnectToken(
 			    addressList,		// IPEndPoint[] list of addresses the client can connect to. Must have at least one and no more than 32.
-			    30,		// in how many seconds will the token expire
-			    30,		// how long it takes until a connection attempt times out and the client tries the next server.
+			    60,		// in how many seconds will the token expire
+			    60,		// how long it takes until a connection attempt times out and the client tries the next server.
 			    sequenceNumber,		// ulong token sequence number used to uniquely identify a connect token.
-			    clientID,		// ulong ID used to uniquely identify this client
+			    cID,		// ulong ID used to uniquely identify this client
 			    userData		// byte[], up to 256 bytes of arbitrary user data (available to the server as RemoteClient.UserData)
 		    );
 

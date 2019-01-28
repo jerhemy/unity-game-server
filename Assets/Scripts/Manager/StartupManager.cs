@@ -43,7 +43,12 @@ public class StartupManager : MonoBehaviour
         // Load JSON Config
         LoadConfig();
               
+        #if UNITY_STANDALONE_OSX
+        BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneOSXUniversal/{serverConfig.zone}");
+        #elif UNITY_STANDALONE
         BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
+        #endif
+        
         BaseScenePaths = BaseSceneBundle.GetAllScenePaths().ToList();
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.LoadScene(BaseScenePaths[0]);
