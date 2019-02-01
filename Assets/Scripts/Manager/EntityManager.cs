@@ -97,11 +97,7 @@ public class EntityManager : MonoBehaviour
                     
                     MoveToGraveyard(kvp.Value.gameObject);
                     _enitityGraveyard.TryAdd(kvp.Key, entity);
-                }
-                
-                
-                
-                
+                }    
             }
             
             // Graveyard Cleanup 
@@ -132,7 +128,7 @@ public class EntityManager : MonoBehaviour
 
     public void LoadEntities(IEnumerable<Mob> mobs)
     {
-        
+
     }
     
     /// <summary>
@@ -157,15 +153,18 @@ public class EntityManager : MonoBehaviour
             
             //Create Entity
             var go = new GameObject($"{mob.name}_{Math.Abs(id)}");
+
             //var attributes = new Attributes();
             //attributes.hp = mob.hp;
             
             var entityBase = go.AddComponent<Entity>();
             entityBase.id = id;
             //entityBase.entityAttributes = attributes;
-                        
-            GameObject.CreatePrimitive(PrimitiveType.Cube).transform.parent = go.transform;
-            
+
+            var model = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            model.transform.parent = go.transform;
+            model.transform.position = new Vector3(0f, .5f, 0f);
+
             //go.AddComponent<CharacterController>();
             go.AddComponent<NavMeshAgent>();
             entityBase.loot = go.AddComponent<EntityLoot>();

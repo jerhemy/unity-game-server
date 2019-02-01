@@ -87,7 +87,7 @@ public class StartupManager : MonoBehaviour
             mobs.Add(new Mob(x,true));
         }
         
-        EntityManager.instance.LoadEntities(mobs);
+        EntityManager.instance.SpawnEntity(mobs);
     }
     
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

@@ -15,17 +15,19 @@ namespace Server.Net
     {
         public override void OnServerReceiveMessage(RemoteClient client, short type, byte[] data)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public override void OnClientConnected(RemoteClient client)
         {
-            throw new NotImplementedException();
+            Debug.Log($"[{DateTime.Now}] [Server] Client Connected");
+            //throw new NotImplementedException();
         }
 
         public override void OnClientDisconnected(RemoteClient client)
         {
-            throw new NotImplementedException();
+            Debug.Log($"[{DateTime.Now}] [Server] Client Disconnected");
+            //throw new NotImplementedException();
         }
 
         void Start()

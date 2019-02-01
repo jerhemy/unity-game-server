@@ -26,7 +26,7 @@ namespace Server.Net
 		public byte[] GetKey()
 		{
 			var pkey = privateKey.Substring(0, 16);
-			return Encoding.ASCII.GetBytes(pkey);
+			return Encoding.Unicode.GetBytes(pkey);
 		}
 
 	}
@@ -59,7 +59,7 @@ namespace Server.Net
 
 	    public void StartServer(ServerConfig config)
 	    {
-		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, privateKey);
+		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
 		    Debug.Log($"{GenerateToken(config)}");
 	    }
 	    
@@ -147,15 +147,15 @@ namespace Server.Net
 	    public byte[] GenerateToken(ulong protocolID, string serverKey, string ipAddress, int port)
 	    {
 		    var sequenceNumber = ulong.Parse(DateTime.Now.ToString("hhmmssffffff"));
-		    //var privateKey = Encoding.ASCII.GetBytes(serverKey);
+		    var privateKey = Encoding.Unicode.GetBytes(serverKey);
 
-			var privateKey = new byte[]
-			{
-				0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
-				0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
-				0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
-				0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
-			};
+			//var privateKey = new byte[]
+			//{
+			//	0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
+			//	0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
+			//	0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
+			//	0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
+			//};
 	    
 		    var worldIP = new IPEndPoint(IPAddress.Parse(ipAddress), port);	    
 		    IPEndPoint[] addressList = {worldIP}; 
