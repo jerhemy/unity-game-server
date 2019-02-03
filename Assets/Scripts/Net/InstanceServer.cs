@@ -17,6 +17,7 @@ namespace Server.Net
         
         public override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
         {
+            //throw new NotImplementedException();
             var type = (OP_CODE)BitConverter.ToInt16(data, 0);
             
             byte[] buffer = new byte[size - 2];
@@ -28,12 +29,14 @@ namespace Server.Net
 
         public override void OnClientConnected(RemoteClient client)
         {
-            throw new NotImplementedException();
+            Debug.Log($"[{DateTime.Now}] [Server] Client Connected");
+            //throw new NotImplementedException();
         }
 
         public override void OnClientDisconnected(RemoteClient client)
         {
-            throw new NotImplementedException();
+            Debug.Log($"[{DateTime.Now}] [Server] Client Disconnected");
+            //throw new NotImplementedException();
         }
 
         void Start()

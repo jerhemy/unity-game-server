@@ -47,7 +47,12 @@ public class StartupManager : MonoBehaviour
         // Load JSON Config
         LoadConfig();
               
+        #if UNITY_STANDALONE_OSX
+        BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneOSXUniversal/{serverConfig.zone}");
+        #elif UNITY_STANDALONE
         BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
+        #endif
+        
         BaseScenePaths = BaseSceneBundle.GetAllScenePaths().ToList();
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.LoadScene(BaseScenePaths[0]);
@@ -56,7 +61,7 @@ public class StartupManager : MonoBehaviour
     private static void LoadConfig()
     {  
         var m_Path = Application.dataPath;
-        Debug.Log($"Path: {m_Path}");
+        //Debug.Log($"Path: {m_Path}");
         try
         {
             using (StreamReader r = new StreamReader($"{m_Path}/config.json"))
@@ -69,7 +74,7 @@ public class StartupManager : MonoBehaviour
                 Debug.Log($"PrivateKey: {serverConfig.privateKey}");
                 
                 var keyLength = serverConfig.privateKey.Length == 16;
-                Debug.Assert(keyLength, "Invalid privateKey length");             
+                //Debug.Assert(keyLength, "Invalid privateKey length");             
             }
         }
         catch (Exception ex)
@@ -86,7 +91,7 @@ public class StartupManager : MonoBehaviour
             mobs.Add(new Mob(1,true));
         //}
         
-        EntityManager.instance.LoadEntities(mobs);
+        EntityManager.instance.SpawnEntity(mobs);
     }
     
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

@@ -25,7 +25,7 @@ namespace Models
             hp = 100;
             this.id = id;
             name = randomeName();
-            position = new Vector3(Random.Range(-100.0f, 100.0f), .5f, Random.Range(-100.0f, 100.0f));
+            position = new Vector3(Random.Range(-100.0f, 100.0f), 0.0f, Random.Range(-100.0f, 100.0f));
             heading = Quaternion.Euler(0f, Random.Range(0, 90), 0f);
         }
         
