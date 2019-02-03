@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using Net;
 using UnityEngine;
 
-public class EventManager : MonoBehaviour
+public class EventManager
 {
-    private Dictionary<string, Action<INetworkPacket>> _events;
+    private Dictionary<OP_CODE, Action<INetworkPacket>> _events;
     
     private static EventManager eventManager;
 
@@ -14,32 +14,23 @@ public class EventManager : MonoBehaviour
     {
         get
         {
-            if (!eventManager)
+            if (eventManager != null)
             {
-                eventManager = FindObjectOfType(typeof(EventManager)) as EventManager;
-
-                if (!eventManager)
-                {
-                    Debug.LogError("There needs to be one active EventManger script on a GameObject in your scene.");
-                }
-                else
-                {
-                    eventManager.Init();
-                }
+                eventManager = new EventManager();                
             }
             return eventManager;
         }
     }
 
-    void Init()
+    private EventManager()
     {
         if (_events == null)
         {
-            _events = new Dictionary<string, Action<INetworkPacket>>();
+            _events = new Dictionary<OP_CODE, Action<INetworkPacket>>();
         }
     }
 
-    public static void Subscribe(string eventName, Action<INetworkPacket> listener)
+    public void Subscribe(OP_CODE eventName, Action<INetworkPacket> listener)
     {
         Action<INetworkPacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
@@ -58,7 +49,7 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Unsubscribe(string eventName, Action<INetworkPacket> listener)
+    public void Unsubscribe(OP_CODE eventName, Action<INetworkPacket> listener)
     {
         if (eventManager == null) return;
         Action<INetworkPacket> thisEvent;
@@ -72,7 +63,7 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    public static void Publish(string eventName, INetworkPacket eventParam)
+    public void Publish(OP_CODE eventName, INetworkPacket eventParam)
     {
         Action<INetworkPacket> thisEvent = null;
         if (instance._events.TryGetValue(eventName, out thisEvent))
@@ -81,13 +72,4 @@ public class EventManager : MonoBehaviour
             // OR USE  instance.eventDictionary[eventName](eventParam);
         }
     }
-}
-
-//Re-usable structure/ Can be a class to. Add all parameters you need inside it
-public struct EventParam
-{
-    public string param1;
-    public int param2;
-    public float param3;
-    public bool param4;
 }

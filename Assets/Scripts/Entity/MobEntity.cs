@@ -5,7 +5,8 @@ using UnityEngine.AI;
 
 namespace MMO.Entity
 {
-    public class Entity : MonoBehaviour
+    [RequireComponent(typeof(Attributes))]
+    public class MobEntity : MonoBehaviour
     {
         public long id;
         
@@ -49,11 +50,6 @@ namespace MMO.Entity
             }
 
             return false;
-        }
-
-        void Update()
-        {
-            
         }
     }
 }

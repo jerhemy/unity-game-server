@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Models;
+using Net;
 using Server.Net;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,6 +19,8 @@ public class StartupManager : MonoBehaviour
     private static ServerConfig serverConfig;
     
     public static StartupManager instance;
+
+    private BaseInstanceServer baseServer;
     
     void Awake()
     {
@@ -40,6 +43,7 @@ public class StartupManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        baseServer = new BaseInstanceServer();
         // Load JSON Config
         LoadConfig();
               
@@ -59,9 +63,9 @@ public class StartupManager : MonoBehaviour
             {
                 string json = r.ReadToEnd();
                 serverConfig = JsonUtility.FromJson<ServerConfig>(json);
-                Debug.Log($"ZoneID: {serverConfig.privateKey}");
-                Debug.Log($"IP: {serverConfig.privateKey}");
-                Debug.Log($"Port: {serverConfig.privateKey}");
+                Debug.Log($"ZoneID: {serverConfig.zone}");
+                Debug.Log($"IP: {serverConfig.ip}");
+                Debug.Log($"Port: {serverConfig.port}");
                 Debug.Log($"PrivateKey: {serverConfig.privateKey}");
                 
                 var keyLength = serverConfig.privateKey.Length == 16;
@@ -77,10 +81,10 @@ public class StartupManager : MonoBehaviour
     private void LoadEntities()
     {
         List<Mob> mobs = new List<Mob>();
-        for (int x = 0; x < 100; x++)
-        {
-            mobs.Add(new Mob(x,true));
-        }
+        //for (int x = 0; x < 100; x++)
+        //{
+            mobs.Add(new Mob(1,true));
+        //}
         
         EntityManager.instance.LoadEntities(mobs);
     }
@@ -90,6 +94,7 @@ public class StartupManager : MonoBehaviour
         if (scene.name == serverConfig.zone)
         {
             LoadEntities();
+            //baseServer.StartServer(serverConfig);
             var instanceServer = gameObject.AddComponent<InstanceServer>();
             instanceServer.StartServer(serverConfig);
         }

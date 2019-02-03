@@ -13,9 +13,17 @@ namespace Server.Net
 {    
     public class InstanceServer : NetcodeServerBehaviour
     {
-        public override void OnServerReceiveMessage(RemoteClient client, short type, byte[] data)
+        private readonly EventManager eventManager = EventManager.instance;
+        
+        public override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
         {
-            throw new NotImplementedException();
+            var type = (OP_CODE)BitConverter.ToInt16(data, 0);
+            
+            byte[] buffer = new byte[size - 2];
+            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
+            var packet = new NetworkPacket(client, buffer);
+            
+            eventManager.Publish(type, packet);
         }
 
         public override void OnClientConnected(RemoteClient client)

@@ -35,7 +35,7 @@ namespace Server.Net
 
 	    private NetcodeServer _server;
 	    
-	    public abstract void OnServerReceiveMessage(RemoteClient client, short type, byte[] data);
+	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
 	    public abstract void OnClientConnected(RemoteClient client);
 	    public abstract void OnClientDisconnected(RemoteClient client);
 	    
@@ -85,12 +85,8 @@ namespace Server.Net
 		    ReliableEndpoint endpoint;
 		    if (!_clients.TryGetValue(client, out endpoint)) return;
 		    endpoint.ReceiveCallback = (data, size) =>
-		    {
-			    byte[] buffer = new byte[size];
-			    var type = BitConverter.ToInt16(data, 0);
-			    Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
-			    
-			    OnServerReceiveMessage( client, type, buffer );
+		    {			    
+			    OnServerReceiveMessage( client, data, size );
 		    };
 		    endpoint.ReceivePacket(packet.InternalBuffer, packet.Length);
 	    }

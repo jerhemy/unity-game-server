@@ -77,7 +77,7 @@ public class EntityManager : MonoBehaviour
             entityGraveyardContainer.transform.parent = transform;
         }
         
-        StartCoroutine(Process());
+        //StartCoroutine(Process());
         //EventManager.Subscribe("CreatePlayer", CreatePlayer);
         //EventManager.Subscribe("UpdatePlayer", CreatePlayer);
         //EventManager.Subscribe("RemovePlayer", CreatePlayer);
