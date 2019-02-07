@@ -1,9 +1,13 @@
-using NetcodeIO.NET;
-
 namespace Entities
 {
-    public class Entity
+    public abstract class Entity
     {
+        public string name;
+        public float posX;
+        public float posY;
+        public float posZ;
+        public float direction;
+        
         public virtual bool IsClient() { return false; }
         public virtual bool IsNPC() { return false; }
         public virtual bool IsMob() { return false; }
@@ -13,7 +17,7 @@ namespace Entities
         public virtual bool IsDoor() { return false; }
         public virtual bool IsTrap() { return false; }
         
-        public virtual bool Process() { return false; }
-        public virtual bool Save() { return false; }
+        public abstract bool Process();
+        public abstract bool Save();
     }
 }

@@ -2,13 +2,11 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
-using MMO.Entity;
-using MMO.Entity.AI;
-using Models;
+using System.Linq;
+using Entities;
 using Net;
 using UnityEngine;
-using UnityEngine.AI;
+using Vector3 = UnityEngine.Vector3;
 
 /// <summary>
 /// Manages all entities in the scene
@@ -18,36 +16,28 @@ public class EntityManager : MonoBehaviour
     /// <summary>
     /// Collection holds all NPC entities in scene
     /// </summary>
-    private ConcurrentDictionary<long, Entity> _entity;
-    private ConcurrentDictionary<long, Entity> _enitityGraveyard;
+    private ConcurrentDictionary<long, EntityGO> _entity;
         
-    private GameObject entityContainer;
-    private GameObject entityGraveyardContainer; 
+    public GameObject activeContainer;
 
+    [SerializeField]
+    private int objectPoolSize = 2000;
+
+    private List<GameObject> objectPool;
     
     public static EntityManager instance;
 
-    private long _playerCounter = 0;
-    private long _npcCounter = 0;
-    
-    private long GetNextID()
-    {
-        return Interlocked.Increment(ref _playerCounter);
-    }
-    
-    private long GetNextNPCID()
-    {
-        return Interlocked.Decrement(ref _npcCounter);
-    }
     
     void Awake()
     {
+        
         //Check if instance already exists
         if (instance == null)
-                
+        {
             //if not, set instance to this
             instance = this;
-            
+
+        }
         //If instance already exists and it's not this:
         else if (instance != this)
                 
@@ -55,26 +45,36 @@ public class EntityManager : MonoBehaviour
             Destroy(gameObject);    
             
         //Sets this to not be destroyed when reloading scene
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);             
     }
     
     // Start is called before the first frame update
     void Start()
     {
+
+        
         if (_entity == null)
         {
-            _entity = new ConcurrentDictionary<long, Entity>();
+            _entity = new ConcurrentDictionary<long, EntityGO>();
             
-            entityContainer = new GameObject("Active");
-            entityContainer.transform.position = new Vector3(0,0,0);
-            entityContainer.transform.parent = transform;                     
+            activeContainer = new GameObject("Active");
+            activeContainer.transform.position = new Vector3(0,0,0);
+            activeContainer.transform.parent = transform;                     
         } 
         
-        if(_enitityGraveyard == null)
+        objectPool = new List<GameObject>();
+        for (var count = 0; count < objectPoolSize; count++)
         {
-            _enitityGraveyard = new ConcurrentDictionary<long, Entity>();
-            entityGraveyardContainer = new GameObject("Graveyard");
-            entityGraveyardContainer.transform.parent = transform;
+            var newGO = new GameObject();
+            var entityGO = newGO.AddComponent<EntityGO>();
+            
+            #if UNITY_EDITOR
+            var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.transform.position = new Vector3(0f, 0.5f, 0f);
+            box.transform.parent = newGO.transform;
+            #endif
+            
+            objectPool.Add(newGO);
         }
         
         //StartCoroutine(Process());
@@ -87,45 +87,21 @@ public class EntityManager : MonoBehaviour
     {
         while (true)
         {
-            foreach (var kvp in _entity)
+            // Get all EntityGO objects active in scene
+            var entities = _entity.Where(entity => entity.Value.gameObject.activeInHierarchy).Select( go => go.Value);
+            
+            // Run Update
+            foreach (var go in entities)
             {
-                var entity = kvp.Value;
-                
-                if (entity.IsDead())
-                {               
-                    entity.gameObject.SetActive(false);
-                    
-                    MoveToGraveyard(kvp.Value.gameObject);
-                    _enitityGraveyard.TryAdd(kvp.Key, entity);
-                }    
+                go.GetComponent<EntityGO>().Process();
             }
             
-            // Graveyard Cleanup 
-
-            foreach (var kvp in _enitityGraveyard)
-            {
-                if (kvp.Value.GetComponent<EntityLoot>().HasItems())
-                {
-                    
-                }
-            }
-
             yield return new WaitForSeconds(0.1f);
         }
 
     }
 
     
-    private void MoveToActive(GameObject go)
-    {
-        go.transform.parent = entityContainer.transform;
-    }
-
-    private void MoveToGraveyard(GameObject go)
-    {
-        go.transform.parent = entityGraveyardContainer.transform;
-    }
-
     public void LoadEntities(IEnumerable<Mob> mobs)
     {
 
@@ -143,72 +119,39 @@ public class EntityManager : MonoBehaviour
             //SpawnEntity();
         }
     }
-    public void SpawnEntity(IEnumerable<Mob> mobs)
+    public void AddEntity(IEnumerable<Entity> entity)
     {
         // On creation we use the Mob object as this is the initial state
         // For Updates we use the GameObject as that will maintain current state
-        foreach (var mob in mobs)
+        foreach (var e in entity)
         {
-            var id = GetNextNPCID();
+            // Find available object from pool
+            var go = GetFreeObject();
             
-            //Create Entity
-            var go = new GameObject($"{mob.name}_{Math.Abs(id)}");
+            var id = GetID();
+            go.SetID(id);
+            go.AddEntity(e);
 
-            //var attributes = new Attributes();
-            //attributes.hp = mob.hp;
+            _entity.TryAdd(id, go);
             
-            var entityBase = go.AddComponent<Entity>();
-            entityBase.id = id;
-            //entityBase.entityAttributes = attributes;
-
-            var model = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            model.transform.parent = go.transform;
-            model.transform.position = new Vector3(0f, .5f, 0f);
-
-            //go.AddComponent<CharacterController>();
-            go.AddComponent<NavMeshAgent>();
-            entityBase.loot = go.AddComponent<EntityLoot>();
-            
-            var wandering = go.AddComponent<WanderingAI>();
-            wandering.wanderTimer = 0;
-            wandering.wanderRadius = 100f;
-            
-            MoveToActive(go);
-            
-            go.transform.position = mob.position;
-            go.transform.rotation = mob.heading;
-
-            mob.gameObject = go;
-            //var CC = go.GetComponent<CharacterController>();
-            //CC.transform.TransformDirection()     
-            _entity.TryAdd(id, entityBase);
+            go.Spawn();
         }
     }
 
-    public void CreatePlayer(Mob mob)
+    private long GetID()
     {
-        var id = GetNextID();
-        // Load Player Details from Persistant Storage
+        return DateTime.UtcNow.Ticks;
+    }
+    
+    public void CreatePlayer(long id, ClientPlayer client)
+    {   
+        
+        var go = GetFreeObject();
+        go.AddEntity(client);
 
-        //Create Entity
-        var go = new GameObject($"{mob.name}_{Math.Abs(id)}");
-
-        go.AddComponent<ClientUpdate>();
-        
-        GameObject.CreatePrimitive(PrimitiveType.Capsule).transform.parent = go.transform;
-        
-        go.AddComponent<NavMeshAgent>();
-        go.transform.parent = entityContainer.transform;
+        _entity.TryAdd(id, go);
             
-        //go.transform.position = m.position;
-        //go.transform.rotation = m.heading;
-            
-        //var CC = go.GetComponent<CharacterController>();
-        //CC.transform.TransformDirection()      
-        //_entity.TryAdd(id, go);
-        
-        // Send Packet that user is finished loading
-        //EventManager.Publish("");
+        go.Spawn();
     }
     
     public void RemovePlayer(INetworkPacket packet)
@@ -227,4 +170,22 @@ public class EntityManager : MonoBehaviour
         // Send Packet that user is finished loading
         //EventManager.Publish("");
     }
+
+    private EntityGO GetFreeObject()
+    {
+        var go = objectPool.FirstOrDefault(g => g.gameObject.activeInHierarchy == false);
+        if (go) return go.GetComponent<EntityGO>();
+        
+        var newGO = new GameObject();
+        var entityGO = newGO.AddComponent<EntityGO>();
+        objectPool.Add(newGO);
+        return entityGO;
+    }
+
+    public EntityGO GetTargetByID(long id)
+    {
+        _entity.TryGetValue(id, out var entity);
+        return entity;
+    }
 }
+

@@ -1,23 +1,29 @@
 ﻿using UnityEngine;
-using System.Collections;
-using MMO.Interfaces;
 using UnityEngine.AI;
 
 namespace MMO.Entity.AI
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class WanderingAI : MonoBehaviour, IEntityAI {
-     
-        public float wanderRadius;
-        public float wanderTimer;
+    public class WanderingAI : MonoBehaviour
+    {
+
+        private EntityGO eGo;
+        
+        public float wanderRadius = 100;
+        public float wanderTimer = 10;
      
         private Transform target;
         private NavMeshAgent agent;
         private float timer;
-     
+
+        void Awake()
+        {
+            eGo = gameObject.GetComponent<EntityGO>();
+        }
         // Use this for initialization
         void OnEnable () {
-            agent = GetComponent<NavMeshAgent> ();
+            
+            agent = GetComponent<NavMeshAgent>();
             timer = wanderTimer;
         }
      
@@ -30,6 +36,8 @@ namespace MMO.Entity.AI
                 agent.SetDestination(newPos);
                 timer = 0;
             }
+
+            eGo.EntityPositon = transform.position;
         }
      
         public static Vector3 RandomNavSphere(Vector3 origin, float dist, int layermask) {

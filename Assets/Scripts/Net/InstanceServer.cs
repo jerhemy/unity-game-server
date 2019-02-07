@@ -17,14 +17,14 @@ namespace Server.Net
         
         public override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
         {
-            //throw new NotImplementedException();
+            // Always read the first 2 bytes to find out what type of message was received.
             var type = (OP_CODE)BitConverter.ToInt16(data, 0);
-            
-            byte[] buffer = new byte[size - 2];
-            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
-            var packet = new NetworkPacket(client, buffer);
-            
-            eventManager.Publish(type, packet);
+            Debug.Log($"[{DateTime.Now}] [Server] Client Message: {type}");
+//            byte[] buffer = new byte[size - 2];
+//            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
+//            var packet = new NetworkPacket(client, buffer);
+//            
+//            eventManager.Publish(type, packet);
         }
 
         public override void OnClientConnected(RemoteClient client)
@@ -38,23 +38,5 @@ namespace Server.Net
             Debug.Log($"[{DateTime.Now}] [Server] Client Disconnected");
             //throw new NotImplementedException();
         }
-
-        void Start()
-        {
-
-        }
-        
-        
-        private void NetworkRange(Vector3 center, float radius)
-        {
-            Collider[] hitColliders = Physics.OverlapSphere(center, radius);
-            int i = 0;
-            while (i < hitColliders.Length)
-            {
-                //hitColliders[i].SendMessage("AddDamage");
-                i++;
-            }
-        }
-
     }
 }

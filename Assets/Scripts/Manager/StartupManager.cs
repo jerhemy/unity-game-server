@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Models;
+using Entities;
 using Net;
 using Server.Net;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
 
 public class StartupManager : MonoBehaviour
 {
@@ -85,13 +86,13 @@ public class StartupManager : MonoBehaviour
 
     private void LoadEntities()
     {
-        List<Mob> mobs = new List<Mob>();
-        //for (int x = 0; x < 100; x++)
-        //{
-            mobs.Add(new Mob(1,true));
-        //}
+        List<Entity> mobs = new List<Entity>();
+        for (int x = 0; x < 100; x++)
+        {
+            mobs.Add(new Mob());
+        }
         
-        EntityManager.instance.SpawnEntity(mobs);
+        EntityManager.instance.AddEntity(mobs);
     }
     
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

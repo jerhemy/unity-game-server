@@ -41,11 +41,9 @@ namespace Server.Net
           0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
           0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
         };
-
-        private ulong clientID = 0;
 	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
-
+	    private ConcurrentDictionary<long, RemoteClient> _clientLookup;
 	    private NetcodeServer _server;
 	    
 	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
@@ -54,7 +52,8 @@ namespace Server.Net
 	    
 	    void Start()
 	    {
-		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();		   		    
+		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
+		    _clientLookup = new ConcurrentDictionary<long, RemoteClient>();
 	    }
 
 	    public void StartServer(ServerConfig config)
@@ -86,6 +85,11 @@ namespace Server.Net
 
 	    private void ClientConnected(RemoteClient client)
 	    {
+		    
+			var id = DateTime.UtcNow.Ticks;
+			_clientLookup.TryAdd(id, client);
+			_clients.TryAdd(client, new ReliableEndpoint());
+
 		    OnClientConnected(client);
 	    }
 
@@ -96,6 +100,11 @@ namespace Server.Net
 	    
 	    private void ReceivePacket(RemoteClient client, ByteBuffer packet)
 	    {
+		    // Get ID from Packet
+		    
+		    // Verify Client for ID matches Client for ReliableEndpoint
+		    
+		    
 		    ReliableEndpoint endpoint;
 		    if (!_clients.TryGetValue(client, out endpoint)) return;
 		    endpoint.ReceiveCallback = (data, size) =>
@@ -161,7 +170,7 @@ namespace Server.Net
 			    privateKey		// byte[32], must be the same as the private key passed to the Server constructor
 		    );
 
-		    var cID = clientID + 1;
+		    var cID = (ulong)DateTime.UtcNow.Ticks;
 		    var userData = new byte[256];
 		    
 		    // ClientID will be AccountID as only clients will be connecting to the World Server
@@ -170,7 +179,7 @@ namespace Server.Net
 			    60,		// in how many seconds will the token expire
 			    60,		// how long it takes until a connection attempt times out and the client tries the next server.
 			    1UL,		// ulong token sequence number used to uniquely identify a connect token.
-			    1UL,		// ulong ID used to uniquely identify this client
+			    cID,		// ulong ID used to uniquely identify this client
 			    userData		// byte[], up to 256 bytes of arbitrary user data (available to the server as RemoteClient.UserData)
 		    );
 
