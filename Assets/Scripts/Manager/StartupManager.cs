@@ -20,8 +20,6 @@ public class StartupManager : MonoBehaviour
     private static ServerConfig serverConfig;
     
     public static StartupManager instance;
-
-    private BaseInstanceServer baseServer;
     
     void Awake()
     {
@@ -44,7 +42,7 @@ public class StartupManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        baseServer = new BaseInstanceServer();
+
         // Load JSON Config
         LoadConfig();
               
@@ -92,7 +90,7 @@ public class StartupManager : MonoBehaviour
             mobs.Add(new Mob());
         }
         
-        EntityManager.instance.AddEntity(mobs);
+        ServerEntityManager.instance.AddEntity(mobs);
     }
     
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

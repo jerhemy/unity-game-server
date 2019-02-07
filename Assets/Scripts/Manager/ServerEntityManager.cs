@@ -11,7 +11,7 @@ using Vector3 = UnityEngine.Vector3;
 /// <summary>
 /// Manages all entities in the scene
 /// </summary>
-public class EntityManager : MonoBehaviour
+public class ServerEntityManager : MonoBehaviour
 {
     /// <summary>
     /// Collection holds all NPC entities in scene
@@ -25,7 +25,7 @@ public class EntityManager : MonoBehaviour
 
     private List<GameObject> objectPool;
     
-    public static EntityManager instance;
+    public static ServerEntityManager instance;
 
     
     void Awake()

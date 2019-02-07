@@ -12,7 +12,7 @@ public class EntityGO : MonoBehaviour
     [SerializeField]
     private long id;
   
-    private EntityManager entityManager = EntityManager.instance;
+    private ServerEntityManager entityManager = ServerEntityManager.instance;
     
     [CanBeNull] private Entity _entity;
 
