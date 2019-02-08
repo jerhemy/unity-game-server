@@ -88,22 +88,7 @@ namespace Server.Net
 			var id = DateTime.UtcNow.Ticks;
 			_clientLookup.TryAdd(id, client);
 			
-			var endpoint = new ReliableEndpoint();
-
-			endpoint.TransmitCallback = ( data, size ) =>
-			{
-				Debug.Log($"{DateTime.Now} [Server] TransmitCallback: Data: {data.Length} bytes, Size: {size} bytes");
-				var buffer = BufferPool.GetBuffer( data.Length );
-				buffer.BufferCopy(data, 0, 0, data.Length);
-				_server.SendPayload(client, buffer );
-			};
-			
-			endpoint.ReceiveCallback = (data, size) =>
-			{		
-				Debug.Log("ReceiveCallback Called");
-				OnServerReceiveMessage( client, data, size );
-			};
-			
+			var endpoint = new ReliableEndpoint();			
 			_clients.TryAdd(client, endpoint);
 
 		    OnClientConnected(client);
@@ -121,6 +106,18 @@ namespace Server.Net
 		    // Verify Client for ID matches Client for ReliableEndpoint
 		    
 		    if (!_clients.TryGetValue(client, out var endpoint)) return;
+		    endpoint.Update();
+		    
+		    endpoint.ReceiveCallback = (data, size) =>
+		    {		
+				#if UNITY_EDITOR		    
+				Debug.Log($"{DateTime.Now} [Server] Sent {(OP)BitConverter.ToInt32(data, 0)} to client {client.ClientID}");
+				#endif
+			    
+			    OnServerReceiveMessage( client, data, size );
+		    };
+		    
+
 		    endpoint.ReceivePacket(packet.InternalBuffer, packet.Length);
 	    }
 
@@ -128,21 +125,43 @@ namespace Server.Net
 	    /// Sends data to the Game Server
 	    /// </summary>
 	    
-	    public void Send(RemoteClient client, byte[] payload, int size, QosType type)
+	    protected void Send(RemoteClient client, byte[] payload, int payloadSize, QosType type)
 	    {
 		    if (!_clients.TryGetValue(client, out var endpoint)) return;
 		    endpoint.Update();
-		    endpoint.SendMessage(payload, size, type);
+		    endpoint.TransmitCallback = ( data, size ) =>
+		    {
+			    ByteBuffer buffer = BufferPool.GetBuffer(size);
+			    buffer.BufferCopy(data, 0, 0, size);
+			    _server.SendPayload(client, buffer );
+		    };
+		    
+			#if UNITY_EDITOR		    
+			Debug.Log($"{DateTime.Now} [Server] Sent {(OP)BitConverter.ToInt32(payload, 0)} to client {client.ClientID}");
+			#endif
+		    
+		    endpoint.SendMessage(payload, payloadSize, type);
 	    }
 	    
-	    public void SendPacket(RemoteClient client, NetworkPacket packet, QosType type)
+	    protected void SendPacket(RemoteClient client, NetworkPacket packet, QosType type)
 	    {
-		    Debug.Log("SendPacket Called");
 		    if (!_clients.TryGetValue(client, out var endpoint)) return;
 		    endpoint.Update();
-		    Debug.Log($"{DateTime.Now} [Server] SendPacket: {packet.length} bytes sent");
+		    
+		    endpoint.TransmitCallback = ( data, size ) =>
+		    {			    		
+			    ByteBuffer buffer = BufferPool.GetBuffer(size);
+			    buffer.BufferCopy(data, 0, 0, size);
+			    _server.SendPayload(client, buffer );
+			    
+			    //_server.SendPayload(client, data, size );
+		    };
+		    
+		    #if UNITY_EDITOR		    
+		    Debug.Log($"{DateTime.Now} [Server] Sent {packet.type} to client {client.ClientID}");
+		    #endif
+		    
 		    endpoint.SendMessage(packet.data, packet.length, type);
-		    Debug.Log("SendMessage Called");
 	    }
 	    
 		public void OnDestroy()

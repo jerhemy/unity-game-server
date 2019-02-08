@@ -96,6 +96,11 @@ namespace UnityNetcodeIO
 		{
 			internalServer.SendPayload(client, payload.InternalBuffer, payload.Length);
 		}
+		
+		public void SendPayload(RemoteClient client, byte[] payload, int size)
+		{
+			internalServer.SendPayload(client, payload, size);
+		}
 
 		public void Disconnect(RemoteClient client)
 		{

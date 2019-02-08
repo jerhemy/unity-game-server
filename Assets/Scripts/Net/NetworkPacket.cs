@@ -40,11 +40,8 @@ namespace Net
         public NetworkPacket(OP type)
         {
             _type = type;
-            byte[] bType = BitConverter.GetBytes((int) type);
-            var typeLength = sizeof(OP);
-            _length = typeLength;
-            _data = new byte[_length];
-            Buffer.BlockCopy(bType, 0, _data, 0, typeLength );           
+            _data = BitConverter.GetBytes((int) type);
+            _length = _data.Length;
         }
 
         public OP type => _type;

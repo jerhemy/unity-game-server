@@ -13,7 +13,6 @@ using UnityEngine.SceneManagement;
 
 public class StartupManager : MonoBehaviour
 {
-
     public static AssetBundle BaseSceneBundle;
     public static List<string> BaseScenePaths;
     
@@ -48,7 +47,7 @@ public class StartupManager : MonoBehaviour
               
         #if UNITY_STANDALONE_OSX
         BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneOSXUniversal/{serverConfig.zone}");
-        #elif UNITY_STANDALONE
+        #elif UNITY_STANDALONE       
         BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
         #endif
         

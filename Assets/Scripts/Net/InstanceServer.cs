@@ -22,9 +22,9 @@ namespace Server.Net
             Debug.Log($"[{DateTime.Now}] [Server] Client Message: {request.type}");
             
             if (OP.ClientConnect == request.type)
-            {               
-                var response = new NetworkPacket(OP.ServerAddEntity);
-                base.SendPacket(client, response, QosType.Unreliable);
+            {                       
+                var response = new NetworkPacket(OP.ServerChangeScene);
+                base.SendPacket(client, response, QosType.Reliable);
             }
 //            byte[] buffer = new byte[size - 2];
 //            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
@@ -35,12 +35,16 @@ namespace Server.Net
 
         public override void OnClientConnected(RemoteClient client)
         {
+            #if !UNITY_EDITOR
             Debug.Log($"[{DateTime.Now}] [Server] Client Connected");
+            #endif
         }
 
         public override void OnClientDisconnected(RemoteClient client)
         {
+            #if !UNITY_EDITOR
             Debug.Log($"[{DateTime.Now}] [Server] Client Disconnected");
+            #endif
         }
         
     }
