@@ -49,7 +49,7 @@ namespace Server.Net
 	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
 	    public abstract void OnClientConnected(RemoteClient client);
 	    public abstract void OnClientDisconnected(RemoteClient client);
-	    
+	 	    
 	    void Start()
 	    {
 		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
@@ -79,8 +79,7 @@ namespace Server.Net
 		    {
 			    Debug.LogAssertion($"{DateTime.Now} [Instance Server] {ex.Message}"); 
 			    Application.Quit();
-		    }
-	    
+		    }	    
 	    }
 
 	    private void ClientConnected(RemoteClient client)
@@ -88,7 +87,24 @@ namespace Server.Net
 		    
 			var id = DateTime.UtcNow.Ticks;
 			_clientLookup.TryAdd(id, client);
-			_clients.TryAdd(client, new ReliableEndpoint());
+			
+			var endpoint = new ReliableEndpoint();
+
+			endpoint.TransmitCallback = ( data, size ) =>
+			{
+				Debug.Log($"{DateTime.Now} [Server] TransmitCallback: Data: {data.Length} bytes, Size: {size} bytes");
+				var buffer = BufferPool.GetBuffer( data.Length );
+				buffer.BufferCopy(data, 0, 0, data.Length);
+				_server.SendPayload(client, buffer );
+			};
+			
+			endpoint.ReceiveCallback = (data, size) =>
+			{		
+				Debug.Log("ReceiveCallback Called");
+				OnServerReceiveMessage( client, data, size );
+			};
+			
+			_clients.TryAdd(client, endpoint);
 
 		    OnClientConnected(client);
 	    }
@@ -104,13 +120,7 @@ namespace Server.Net
 		    
 		    // Verify Client for ID matches Client for ReliableEndpoint
 		    
-		    
-		    ReliableEndpoint endpoint;
-		    if (!_clients.TryGetValue(client, out endpoint)) return;
-		    endpoint.ReceiveCallback = (data, size) =>
-		    {			    
-			    OnServerReceiveMessage( client, data, size );
-		    };
+		    if (!_clients.TryGetValue(client, out var endpoint)) return;
 		    endpoint.ReceivePacket(packet.InternalBuffer, packet.Length);
 	    }
 
@@ -120,16 +130,19 @@ namespace Server.Net
 	    
 	    public void Send(RemoteClient client, byte[] payload, int size, QosType type)
 	    {
-		    ReliableEndpoint endpoint;
-		    if (!_clients.TryGetValue(client, out endpoint)) return;
-		    endpoint.TransmitCallback = ( data, length ) =>
-		    {
-			    var byteBuffer = new ByteBuffer();
-			    byteBuffer.BufferCopy(payload, 0, 0, size);
-			    _server.SendPayload(client, byteBuffer );
-		    };
-
+		    if (!_clients.TryGetValue(client, out var endpoint)) return;
+		    endpoint.Update();
 		    endpoint.SendMessage(payload, size, type);
+	    }
+	    
+	    public void SendPacket(RemoteClient client, NetworkPacket packet, QosType type)
+	    {
+		    Debug.Log("SendPacket Called");
+		    if (!_clients.TryGetValue(client, out var endpoint)) return;
+		    endpoint.Update();
+		    Debug.Log($"{DateTime.Now} [Server] SendPacket: {packet.length} bytes sent");
+		    endpoint.SendMessage(packet.data, packet.length, type);
+		    Debug.Log("SendMessage Called");
 	    }
 	    
 		public void OnDestroy()

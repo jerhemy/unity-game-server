@@ -154,22 +154,6 @@ public class ServerEntityManager : MonoBehaviour
         go.Spawn();
     }
     
-    public void RemovePlayer(INetworkPacket packet)
-    {
-        // Load Player Details from Persistant Storage
-        //_entity.TryRemove(packet.clientId, out _);  
-        
-        // Send Packet that user is finished loading
-        //EventManager.Publish("");
-    }
-    
-    public void UpdatePlayer(INetworkPacket packet)
-    {
-        // Load Player Details from Persistant Storage
-            
-        // Send Packet that user is finished loading
-        //EventManager.Publish("");
-    }
 
     private EntityGO GetFreeObject()
     {

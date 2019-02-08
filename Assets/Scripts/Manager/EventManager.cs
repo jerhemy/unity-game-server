@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class EventManager
 {
-    private Dictionary<OP_CODE, Action<INetworkPacket>> _events;
+    private Dictionary<OP_CODE, Action<NetworkPacket>> _events;
     
     private static EventManager eventManager;
 
@@ -26,13 +26,13 @@ public class EventManager
     {
         if (_events == null)
         {
-            _events = new Dictionary<OP_CODE, Action<INetworkPacket>>();
+            _events = new Dictionary<OP_CODE, Action<NetworkPacket>>();
         }
     }
 
-    public void Subscribe(OP_CODE eventName, Action<INetworkPacket> listener)
+    public void Subscribe(OP_CODE eventName, Action<NetworkPacket> listener)
     {
-        Action<INetworkPacket> thisEvent;
+        Action<NetworkPacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Add more event to the existing one
@@ -49,10 +49,10 @@ public class EventManager
         }
     }
 
-    public void Unsubscribe(OP_CODE eventName, Action<INetworkPacket> listener)
+    public void Unsubscribe(OP_CODE eventName, Action<NetworkPacket> listener)
     {
         if (eventManager == null) return;
-        Action<INetworkPacket> thisEvent;
+        Action<NetworkPacket> thisEvent;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             //Remove event from the existing one
@@ -63,9 +63,9 @@ public class EventManager
         }
     }
 
-    public void Publish(OP_CODE eventName, INetworkPacket eventParam)
+    public void Publish(OP_CODE eventName, NetworkPacket eventParam)
     {
-        Action<INetworkPacket> thisEvent = null;
+        Action<NetworkPacket> thisEvent = null;
         if (instance._events.TryGetValue(eventName, out thisEvent))
         {
             thisEvent.Invoke(eventParam);
