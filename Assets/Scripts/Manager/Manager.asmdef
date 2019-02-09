@@ -3,7 +3,8 @@
     "references": [
         "Network",
         "Entities",
-        "Interface"
+        "Interface",
+        "Identity"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

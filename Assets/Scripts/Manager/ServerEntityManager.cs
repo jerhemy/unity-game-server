@@ -6,6 +6,7 @@ using System.Linq;
 using Server.Entities;
 using Server.Network;
 using UnityEngine;
+using Utils;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Server.Manager
@@ -84,7 +85,7 @@ namespace Server.Manager
             }
             
             //StartCoroutine(Process());
-            EventManager.instance.Subscribe(OP.ClientGetPlayer, CreatePlayer);
+            EventManager.Subscribe(OP.ClientGetPlayer, CreatePlayer);
             //EventManager.Subscribe("UpdatePlayer", CreatePlayer);
             //EventManager.Subscribe("RemovePlayer", CreatePlayer);
         }
@@ -134,7 +135,7 @@ namespace Server.Manager
                 // Find available object from pool
                 var go = GetFreeObject();
                 
-                var id = GetID();
+                var id = Identity.GetID();
                 go.SetID(id);
                 go.AddEntity(e);
     
@@ -143,12 +144,7 @@ namespace Server.Manager
                 go.Spawn();
             }
         }
-    
-        private long GetID()
-        {
-            return DateTime.UtcNow.Ticks;
-        }
-        
+            
         public void CreatePlayer(long id, NetworkPacket client)
         {
 

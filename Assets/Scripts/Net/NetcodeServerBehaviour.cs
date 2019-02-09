@@ -7,6 +7,7 @@ using NetcodeIO.NET;
 using ReliableNetcode;
 using UnityEngine;
 using UnityNetcodeIO;
+using Utils;
 
 namespace Server.Network
 {
@@ -31,16 +32,21 @@ namespace Server.Network
     {	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
 	    private ConcurrentDictionary<long, RemoteClient> _clientLookup;
+	    private ConcurrentDictionary<RemoteClient, long> _clientIDLookup;
 	    private NetcodeServer _server;
 	    
 	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
+	    public abstract void OnServerReceiveMessageByID(long clientID, byte[] data, int size);
 	    public abstract void OnClientConnected(RemoteClient client);
+	    public abstract void OnClientConnectedByID(long clientID);
 	    public abstract void OnClientDisconnected(RemoteClient client);
+	    public abstract void OnClientDisconnectedByID(long clientID);
 	 	    
 	    void Start()
 	    {
 		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
 		    _clientLookup = new ConcurrentDictionary<long, RemoteClient>();
+		    _clientIDLookup = new ConcurrentDictionary<RemoteClient, long>();
 	    }
 
 	    public void StartServer(ServerConfig config)
@@ -71,14 +77,15 @@ namespace Server.Network
 
 	    private void ClientConnected(RemoteClient client)
 	    {
-		    
-			var id = DateTime.UtcNow.Ticks;
+
+		    var id = Identity.GetID();
 			_clientLookup.TryAdd(id, client);
+			_clientIDLookup.TryAdd(client, id);
 			
 			var endpoint = new ReliableEndpoint();			
 			_clients.TryAdd(client, endpoint);
 
-		    OnClientConnected(client);
+		    OnClientConnectedByID(id);
 	    }
 
 	    private void ClientDisconnected(RemoteClient client)
@@ -100,8 +107,11 @@ namespace Server.Network
 				#if UNITY_EDITOR		    
 				Debug.Log($"{DateTime.Now} [Server] Sent {(OP)BitConverter.ToInt32(data, 0)} to client {client.ClientID}");
 				#endif
-			    
-			    OnServerReceiveMessage( client, data, size );
+
+			    if (GetClientID(client, out var clientID))
+			    {
+				    OnServerReceiveMessageByID(clientID, data, size);
+			    }
 		    };
 		    
 
@@ -149,6 +159,19 @@ namespace Server.Network
 		    
 		    endpoint.SendMessage(packet.data, packet.length, type);
 	    }
+
+	    protected void SendPacketByID(long clientID, NetworkPacket packet, QosType type)
+	    {
+		    if (GetClientByID(clientID, out var client))
+		    {
+			    SendPacket(client, packet, type);
+		    }
+		    else
+		    {
+			    Debug.LogError($"{DateTime.Now} [Server] Could not find client for ID {clientID}");
+		    }
+			
+	    }
 	    
 		public void OnDestroy()
 		{
@@ -161,6 +184,16 @@ namespace Server.Network
 			    _server.Dispose();
 	    }
 
+	    protected bool GetClientByID(long id, out RemoteClient client)
+	    {
+		    return _clientLookup.TryGetValue(id, out client);
+	    }
+	    
+	    protected bool GetClientID(RemoteClient client, out long clientID)
+	    {
+		    return _clientIDLookup.TryGetValue(client, out clientID);
+	    }
+	    
 	    public string GenerateToken(ServerConfig config)
 	    {
 		    var token = GenerateToken(config.protocolId, config.privateKey, config.ip, config.port);

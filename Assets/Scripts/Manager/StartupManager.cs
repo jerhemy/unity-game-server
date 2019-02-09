@@ -51,6 +51,7 @@ namespace Server.Manager
                 BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
             #endif
 
+            Debug.Log($"{DateTime.Now} [Instance Server] Scene Bundle Loaded");
             BaseScenePaths = BaseSceneBundle.GetAllScenePaths().ToList();
             SceneManager.sceneLoaded += OnSceneLoaded;
             SceneManager.LoadScene(BaseScenePaths[0]);
@@ -69,10 +70,7 @@ namespace Server.Manager
                     Debug.Log($"ZoneID: {serverConfig.zone}");
                     Debug.Log($"IP: {serverConfig.ip}");
                     Debug.Log($"Port: {serverConfig.port}");
-                    Debug.Log($"PrivateKey: {serverConfig.privateKey}");
-
-                    var keyLength = serverConfig.privateKey.Length == 16;
-                    //Debug.Assert(keyLength, "Invalid privateKey length");             
+                    Debug.Log($"PrivateKey: {serverConfig.privateKey}");          
                 }
             }
             catch (Exception ex)
@@ -88,12 +86,14 @@ namespace Server.Manager
             {
                 mobs.Add(new Mob());
             }
-
+            
             ServerEntityManager.instance.AddEntity(mobs);
         }
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            Debug.Log($"{DateTime.Now} [Instance Server] Loaded Scene {scene.name}");
+            
             if (scene.name == serverConfig.zone)
             {
                 LoadEntities();
