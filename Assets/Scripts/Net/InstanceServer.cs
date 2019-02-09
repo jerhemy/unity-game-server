@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Net;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,7 +8,7 @@ using UnityNetcodeIO;
 using NetcodeIO.NET;
 using ReliableNetcode;
 
-namespace Server.Net
+namespace Server.Network
 {    
     public class InstanceServer : NetcodeServerBehaviour
     {
@@ -23,7 +22,7 @@ namespace Server.Net
             
             if (OP.ClientConnect == request.type)
             {                       
-                var response = new NetworkPacket(OP.ServerChangeScene);
+                var response = new NetworkPacket(OP.ClientConnect);
                 base.SendPacket(client, response, QosType.Reliable);
             }
 //            byte[] buffer = new byte[size - 2];

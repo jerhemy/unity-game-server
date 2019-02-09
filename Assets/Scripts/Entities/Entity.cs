@@ -1,4 +1,4 @@
-namespace Entities
+namespace Server.Entities
 {
     public abstract class Entity
     {
@@ -16,7 +16,7 @@ namespace Entities
         public virtual bool IsObject() { return false; }
         public virtual bool IsDoor() { return false; }
         public virtual bool IsTrap() { return false; }
-        
+            
         public abstract bool Process();
         public abstract bool Save();
     }

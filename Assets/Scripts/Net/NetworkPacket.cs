@@ -3,15 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using NetcodeIO.NET;
 using UnityEngine;
-namespace Net
-{    
-    public enum OP_CODE
-    {
-        CLIENT_CONNECT = 0x001,
-        CLIENT_DISCONNECT = 0x002,
-        ENITTY_UPDATE = 0x003
-    }
-        
+namespace Server.Network
+{            
     public struct NetworkPacket
     {
         private OP _type;

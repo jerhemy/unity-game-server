@@ -3,13 +3,12 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
-using Net;
 using NetcodeIO.NET;
 using ReliableNetcode;
 using UnityEngine;
 using UnityNetcodeIO;
 
-namespace Server.Net
+namespace Server.Network
 {
 	public class ServerConfig
 	{
@@ -18,11 +17,8 @@ namespace Server.Net
 		public int port;
 		public ulong protocolId;
 		public int maxClients;
-
 		public string privateKey;
 
-		
-		
 		public byte[] GetKey()
 		{
 			var pkey = privateKey.Substring(0, 16);
@@ -32,16 +28,7 @@ namespace Server.Net
 	}
 	
     public abstract class NetcodeServerBehaviour : MonoBehaviour
-    {
-
-        byte[] privateKey = new byte[]
-        {
-          0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
-          0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
-          0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
-          0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
-        };
-	    
+    {	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
 	    private ConcurrentDictionary<long, RemoteClient> _clientLookup;
 	    private NetcodeServer _server;
@@ -124,7 +111,6 @@ namespace Server.Net
 	    /// <summary>
 	    /// Sends data to the Game Server
 	    /// </summary>
-	    
 	    protected void Send(RemoteClient client, byte[] payload, int payloadSize, QosType type)
 	    {
 		    if (!_clients.TryGetValue(client, out var endpoint)) return;

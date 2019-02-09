@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace Entities
+namespace Server.Interface
 {
     public abstract class IEntity
     {
