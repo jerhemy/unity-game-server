@@ -27,6 +27,7 @@ namespace Server.Network
    
         protected override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
         {
+            // Get GameClient ID
             if (!gameClients.TryGetValue(client, out var clientID)) return;
             
             var request = new NetworkPacket(clientID, data);
@@ -40,8 +41,7 @@ namespace Server.Network
         }
 
         protected override void OnClientConnected(RemoteClient client)
-        {
-            
+        { 
             // Game logic works off entity ID's, use IDs for everything past this point
             var clientID = Identity.GetID();
             gameClients.TryAdd(client, clientID);

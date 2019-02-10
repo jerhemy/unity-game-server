@@ -67,10 +67,7 @@ namespace Server.Manager
                 {
                     string json = r.ReadToEnd();
                     serverConfig = JsonUtility.FromJson<ServerConfig>(json);
-                    Debug.Log($"ZoneID: {serverConfig.zone}");
-                    Debug.Log($"IP: {serverConfig.ip}");
-                    Debug.Log($"Port: {serverConfig.port}");
-                    Debug.Log($"PrivateKey: {serverConfig.privateKey}");          
+                    Debug.LogFormat("PrivateKey: {0}", serverConfig.privateKey);       
                 }
             }
             catch (Exception ex)
@@ -98,7 +95,7 @@ namespace Server.Manager
             {
                 LoadEntities();
                 //baseServer.StartServer(serverConfig);
-                var instanceServer = gameObject.AddComponent<InstanceServer>();
+                var instanceServer = gameObject.AddComponent<ClientToInstanceServer>();
                 instanceServer.StartServer(serverConfig);               
             }
         }
