@@ -1,11 +1,6 @@
 {
-    "name": "Manager",
-    "references": [
-        "Network",
-        "Entities",
-        "Interface",
-        "Utils"
-    ],
+    "name": "Utils",
+    "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],

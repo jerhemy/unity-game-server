@@ -148,7 +148,8 @@ namespace Server.Entities
 
         public override bool Process()
         {
-            throw new System.NotImplementedException();
+            return true;
+            //throw new System.NotImplementedException();
         }
 
         public override bool Save()

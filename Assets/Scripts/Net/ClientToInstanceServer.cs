@@ -7,7 +7,7 @@ using Utils;
 
 namespace Server.Network
 {    
-    public class InstanceServer : NetcodeServerBehaviour
+    public class ClientToInstanceServer : NetcodeServerBehaviour
     {   
         private ConcurrentDictionary<RemoteClient, long> gameClients;
         private ConcurrentDictionary<long, RemoteClient> gameClientIDs;

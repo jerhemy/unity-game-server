@@ -15,58 +15,53 @@ namespace Server.Network
 	    {
 		    return DateTime.UtcNow.Ticks;
 	    }
-	    
-	    public abstract void OnClientReceiveMessage(byte[] data, int size);
-	    public abstract void OnClientConnect();
-	    public abstract void OnClientDisconnect(byte[] data, int size);
-	    
-	    public abstract void OnClientNetworkStatus(NetcodeClientStatus status);
+
+	    protected abstract void OnReceiveMessage(byte[] data, int size);
+	    protected abstract void OnConnect();
+	    public abstract void OnDisconnect(byte[] data, int size);
+
+	    protected abstract void OnNetworkStatus(NetcodeClientStatus status);
 	    
 	    protected void StartClient(byte[] connectToken)
 	    {
 		    UnityNetcode.QuerySupport(supportStatus =>
 		    {
-			    if (NetcodeIOSupportStatus.Available == supportStatus)
+			    switch (supportStatus)
 			    {
-				    UnityNetcode.CreateClient(NetcodeIOClientProtocol.IPv4, client =>
-				    {
-					    this.client = client;
-					    endpoint = new ReliableEndpoint();
+				    case NetcodeIOSupportStatus.Available:
+					    UnityNetcode.CreateClient(NetcodeIOClientProtocol.IPv4, client =>
+					    {
+						    this.client = client;
+						    endpoint = new ReliableEndpoint();
 					    
-					    client.Connect(connectToken, () =>
-					    {
-						    OnClientConnect();
-						    // add listener for network messages
-						    client.AddPayloadListener(ReceivePacket);
-
-						    // do stuff
-						    StartCoroutine(StatusUpdate());
-					    }, err =>
-					    {
-							Debug.Log($"[{DateTime.Now}] [Client] {err}");
+						    client.Connect(connectToken, () =>
+						    {
+							    OnConnect();
+							    client.AddPayloadListener(ReceivePacket);
+							    StartCoroutine(StatusUpdate());
+						    }, err =>
+						    {
+							    Debug.Log($"[{DateTime.Now}] [Client] {err}");
+						    });
 					    });
-				    });
-			    }
-			    else if (NetcodeIOSupportStatus.Unavailable == supportStatus)
-			    {
-				    //logLine("Netcode.IO not available");
-			    }
-			    else if (NetcodeIOSupportStatus.HelperNotInstalled == supportStatus)
-			    {
-				    //logLine("Netcode.IO is available, but native helper is not installed");
+					    break;
+				    case NetcodeIOSupportStatus.Unavailable:
+					    //logLine("Netcode.IO not available");
+					    break;
+				    case NetcodeIOSupportStatus.HelperNotInstalled:
+					    //logLine("Netcode.IO is available, but native helper is not installed");
+					    break;
+				    case NetcodeIOSupportStatus.Unknown:
+					    break;
+				    default:
+					    throw new ArgumentOutOfRangeException(nameof(supportStatus), supportStatus, null);
 			    }
 		    });		    
 	    }
 		
 	    private void ReceivePacket(NetcodeClient client, NetcodePacket packet)
 	    {	  
-		    endpoint.ReceiveCallback = (data, size) =>
-		    {		
-			    #if UNITY_EDITOR
-			    Debug.Log($"[{DateTime.Now}] [Client] Received Server Message: {(OP)BitConverter.ToInt32(data, 0)}");
-			    #endif
-			    OnClientReceiveMessage(data, size);
-		    };
+		    endpoint.ReceiveCallback = OnReceiveMessage;
 		    endpoint.ReceivePacket(packet.PacketBuffer.InternalBuffer, packet.PacketBuffer.Length);
 	    }
 
@@ -87,7 +82,7 @@ namespace Server.Network
 		{
 			while (true)
 			{
-				client.QueryStatus(OnClientNetworkStatus);
+				client.QueryStatus(OnNetworkStatus);
 				endpoint.Update();
 				yield return new WaitForSeconds(0.5f);
 			}

@@ -1,7 +1,8 @@
 {
     "name": "Network",
     "references": [
-        "Identity"
+        "Interface",
+        "Utils"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

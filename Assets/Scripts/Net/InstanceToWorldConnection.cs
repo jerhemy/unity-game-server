@@ -1,11 +1,7 @@
 using System;
+using System.Numerics;
 using System.Text;
-using Common;
-using Common.Net.Core;
-using Net;
-using ReliableNetcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityNetcodeIO;
 
 namespace Server.Network
@@ -22,7 +18,6 @@ namespace Server.Network
         {
             // World connection should always be present
             DontDestroyOnLoad(this);
-            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         
         void Start()
@@ -30,9 +25,9 @@ namespace Server.Network
             var token = Encoding.ASCII.GetBytes(connectToken);
             StartClient(token);
         }
-        
 
-        public override void OnClientReceiveMessage(byte[] data, int size)
+
+        protected override void OnReceiveMessage(byte[] data, int size)
         {
             byte[] payload = new byte[size];
 
@@ -41,31 +36,21 @@ namespace Server.Network
             //throw new System.NotImplementedException();
         }
 
-        public override void OnClientConnect()
+        protected override void OnConnect()
         {
             //throw new NotImplementedException();
         }
 
-        public override void OnClientDisconnect(byte[] data, int size)
+        public override void OnDisconnect(byte[] data, int size)
         {
             //throw new NotImplementedException();
         }
 
-        public override void OnClientNetworkStatus(NetcodeClientStatus status)
+        protected override void OnNetworkStatus(NetcodeClientStatus status)
         {
-            throw new NotImplementedException();
-        }
-
-        public override void OnClientNetworkStatus(NetcodeClientStatus status)
-        {
-            //throw new System.NotImplementedException();
-        }
-
-        
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-            // We prefix non-connected scenes with '_'
-            if (scene.name.StartsWith("_")) {
-                Destroy(gameObject);
+            if (status == NetcodeClientStatus.Disconnected)
+            {
+                Debug.Log("I'VE BEEN DISCONNECTED");
             }
         }
     }

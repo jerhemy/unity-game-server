@@ -1,9 +1,10 @@
+using System;
 using System.Numerics;
 
 namespace Server.Interface
 {
     public abstract class IEntity
-    {
+    {        
         public abstract bool IsClient();
         public abstract bool IsNPC();
         public abstract bool IsMob();
@@ -14,5 +15,7 @@ namespace Server.Interface
         public abstract bool IsTrap();
         public abstract bool Process();
         public abstract bool Save();
+        
+        
     }
 }

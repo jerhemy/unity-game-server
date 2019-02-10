@@ -11,7 +11,8 @@ namespace Server.Manager
     public class EntityGO : MonoBehaviour, IEntityGO
     {
         public Transform activeContainer;
-
+        private TextMesh _nameLabel;
+        private GameObject sign;
         [SerializeField] private long id;
 
         private ServerEntityManager entityManager = ServerEntityManager.instance;
@@ -21,8 +22,8 @@ namespace Server.Manager
         void Awake()
         {
             gameObject.SetActive(false);
-            activeContainer = entityManager.activeContainer.transform;
-            gameObject.transform.parent = activeContainer;
+            //activeContainer = entityManager.activeContainer.transform;
+            //gameObject.transform.parent = activeContainer;
         }
 
         public void SetID(long id)
@@ -33,7 +34,7 @@ namespace Server.Manager
 
         void OnEnable()
         {
-            gameObject.transform.parent = activeContainer;
+            //gameObject.transform.parent = activeContainer;
             gameObject.name = _entity.name;
             if (_entity.IsMob())
             {
@@ -45,10 +46,15 @@ namespace Server.Manager
         public void AddEntity(Entity entity)
         {
             _entity = entity;
+            SetName();
             gameObject.transform.position = EntityPositon;
 
         }
 
+        void Update()
+        {
+            sign.transform.position = transform.position + Vector3.up * 2f;  
+        }
         public Entity GetEntity()
         {
             return _entity;
@@ -96,9 +102,25 @@ namespace Server.Manager
             }
         }
 
+        private void SetName()
+        {      
+            sign = new GameObject("Name");          
+            sign.transform.rotation = Camera.main.transform.rotation; // Causes the text faces camera.
+            TextMesh tm = sign.AddComponent<TextMesh>();
+            tm.text = _entity.name;
+            tm.color = new Color(1f, 1f, 1f);
+            tm.fontStyle = FontStyle.Bold;
+            tm.alignment = TextAlignment.Center;
+            tm.anchor = TextAnchor.MiddleCenter;
+            tm.characterSize = 0.065f;
+            tm.fontSize = 60;
+        }
+        
         public bool SpawnOrUpdateEntity()
         {
             return true;
         }
+
+        public bool activeInHierarchy => gameObject.activeInHierarchy;
     }
 }

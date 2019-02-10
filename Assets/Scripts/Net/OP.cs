@@ -5,7 +5,8 @@ namespace Server.Network
         ClientConnect = 0x001,
         ClientDisconnect = 0x002,
         ClientGetPlayer = 0x003,
-          
+        
+        EntityUpdate = 0x004,
         
         ServerChangeScene = 0x03E7,
         // 1000

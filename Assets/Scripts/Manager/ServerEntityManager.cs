@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Server.Entities;
+using Server.Interface;
 using Server.Network;
 using UnityEngine;
 using Utils;
@@ -25,7 +26,7 @@ namespace Server.Manager
         private ConcurrentDictionary<long, EntityGO> _entity;
             
         public GameObject activeContainer;
-    
+        
         [SerializeField]
         private int objectPoolSize = 2000;
     
@@ -36,6 +37,28 @@ namespace Server.Manager
         
         void Awake()
         {
+            activeContainer = GameObject.Find("Active");
+            
+            if (_entity == null)
+            {
+                _entity = new ConcurrentDictionary<long, EntityGO>();                                 
+            } 
+            
+            objectPool = new List<GameObject>();
+
+            for (var count = 0; count < objectPoolSize; count++)
+            {
+                var newGO = new GameObject();
+                newGO.transform.parent = transform.root;
+                newGO.layer = SPAWNED_ENTITY_LAYER;
+                var entityGO = newGO.AddComponent<EntityGO>();
+                
+                var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                box.transform.position = new Vector3(0f, 0.5f, 0f);
+                box.transform.parent = newGO.transform;
+                
+                objectPool.Add(newGO);
+            }
             
             //Check if instance already exists
             if (instance == null)
@@ -56,35 +79,12 @@ namespace Server.Manager
         
         // Start is called before the first frame update
         void Start()
-        {          
-            if (_entity == null)
-            {
-                _entity = new ConcurrentDictionary<long, EntityGO>();               
-                activeContainer = new GameObject("Active");
-                activeContainer.transform.position = new Vector3(0,0,0);
-                activeContainer.transform.parent = transform;                     
-            } 
-            
-            objectPool = new List<GameObject>();
-            for (var count = 0; count < objectPoolSize; count++)
-            {
-                var newGO = new GameObject();
-                newGO.layer = SPAWNED_ENTITY_LAYER;
-                var entityGO = newGO.AddComponent<EntityGO>();
-                
-                #if UNITY_EDITOR
-                var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                box.transform.position = new Vector3(0f, 0.5f, 0f);
-                box.transform.parent = newGO.transform;
-                #endif
-                
-                objectPool.Add(newGO);
-            }
-            
+        {                           
             //StartCoroutine(Process());
             EventManager.Subscribe(OP.ClientGetPlayer, CreatePlayer);
-            //EventManager.Subscribe("UpdatePlayer", CreatePlayer);
+            EventManager.Subscribe(OP.EntityUpdate, UpdateEntityHandler);
             //EventManager.Subscribe("RemovePlayer", CreatePlayer);
+            StartCoroutine(Process());
         }
         
         private IEnumerator Process()
@@ -92,19 +92,26 @@ namespace Server.Manager
             while (true)
             {
                 // Get all EntityGO objects active in scene
-                var entities = _entity.Where(entity => entity.Value.gameObject.activeInHierarchy).Select( go => go.Value);
-                
+                var entities = _entity.Where(entity => entity.Value.activeInHierarchy).Select( go => go.Value);
+
+                var length = entities.Count();
+
                 // Run Update
-                foreach (var go in entities)
+                for (var idx = 0; idx < length; idx++)
                 {
-                    go.GetComponent<EntityGO>().Process();
+                    entities.ElementAt(idx).Process();
                 }
-                
+                 
                 yield return new WaitForSeconds(0.1f);
             }
     
         }
-    
+
+
+        public void UpdateEntityHandler(long id, IEntity entity)
+        {
+            
+        }
         
         public void LoadEntities(IEnumerable<Mob> mobs)
         {
@@ -125,6 +132,7 @@ namespace Server.Manager
         }
         public void AddEntity(IEnumerable<Entity> entity)
         {
+            Debug.Log($"{DateTime.Now} [Instance Server] Add Entities Called");
             // On creation we use the Mob object as this is the initial state
             // For Updates we use the GameObject as that will maintain current state
             foreach (var e in entity)
@@ -153,8 +161,7 @@ namespace Server.Manager
             go.Spawn();
             
         }
-        
-    
+           
         private EntityGO GetFreeObject()
         {
             var go = objectPool.FirstOrDefault(g => g.gameObject.activeInHierarchy == false);
