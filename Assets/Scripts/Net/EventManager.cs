@@ -5,11 +5,11 @@ namespace Server.Network
 {
     public class EventManager
     {
-        private static Dictionary<OP, Action<long, NetworkPacket>> _events = new Dictionary<OP, Action<long, NetworkPacket>>();
+        private static Dictionary<OP, Action<NetworkPacket>> _events = new Dictionary<OP, Action<NetworkPacket>>();
         
-        public static void Subscribe(OP eventName, Action<long, NetworkPacket> listener)
+        public static void Subscribe(OP eventName, Action<NetworkPacket> listener)
         {
-            Action<long, NetworkPacket> thisEvent;
+            Action<NetworkPacket> thisEvent;
             if (_events.TryGetValue(eventName, out thisEvent))
             {
                 //Add more event to the existing one
@@ -26,9 +26,9 @@ namespace Server.Network
             }
         }
 
-        public static void Unsubscribe(OP eventName, Action<long, NetworkPacket> listener)
+        public static void Unsubscribe(OP eventName, Action<NetworkPacket> listener)
         {
-            Action<long, NetworkPacket> thisEvent;
+            Action<NetworkPacket> thisEvent;
             if (_events.TryGetValue(eventName, out thisEvent))
             {
                 //Remove event from the existing one
@@ -39,12 +39,12 @@ namespace Server.Network
             }
         }
 
-        public static void Publish(OP eventName, long id, NetworkPacket eventParam)
+        public static void Publish(OP eventName, NetworkPacket eventParam)
         {
-            Action<long, NetworkPacket> thisEvent = null;
+            Action<NetworkPacket> thisEvent = null;
             if (_events.TryGetValue(eventName, out thisEvent))
             {
-                thisEvent.Invoke(id, eventParam);
+                thisEvent.Invoke(eventParam);
                 // OR USE  instance.eventDictionary[eventName](eventParam);
             }
         }

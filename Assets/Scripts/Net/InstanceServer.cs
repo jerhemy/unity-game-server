@@ -1,76 +1,62 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.UI;
-
-using UnityNetcodeIO;
 using NetcodeIO.NET;
 using ReliableNetcode;
+using Utils;
 
 namespace Server.Network
 {    
     public class InstanceServer : NetcodeServerBehaviour
     {   
-        public override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
+        private ConcurrentDictionary<RemoteClient, long> gameClients;
+        private ConcurrentDictionary<long, RemoteClient> gameClientIDs;
+
+        void Start()
         {
-            // Always read the first 2 bytes to find out what type of message was received.
-            var request = new NetworkPacket(data);
-            Debug.Log($"[{DateTime.Now}] [Server] Client Message: {request.type}");
+            base.Init();
+            
+            gameClients = new ConcurrentDictionary<RemoteClient, long>();
+            gameClientIDs = new ConcurrentDictionary<long, RemoteClient>();
+        }
+        public void StartServer(ServerConfig config)
+        {
+            base.StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
+            Debug.Log($"{GenerateToken(config)}");
+        }
+   
+        protected override void OnServerReceiveMessage(RemoteClient client, byte[] data, int size)
+        {
+            if (!gameClients.TryGetValue(client, out var clientID)) return;
+            
+            var request = new NetworkPacket(clientID, data);
+            Debug.Log($"[{DateTime.Now}] [Server] Received: {clientID}:{request.type}");
             
             if (OP.ClientConnect == request.type)
             {                       
-                var response = new NetworkPacket(OP.ClientConnect);
-                base.SendPacket(client, response, QosType.Reliable);
-            }
-//            byte[] buffer = new byte[size - 2];
-//            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
-//            var packet = new NetworkPacket(client, buffer);
-//            
-//            eventManager.Publish(type, packet);
+                var response = new NetworkPacket(clientID, OP.ClientConnect);
+                base.Send(client, response.data, response.length, QosType.Reliable);
+            }           
         }
 
-        public override void OnServerReceiveMessageByID(long clientID, byte[] data, int size)
+        protected override void OnClientConnected(RemoteClient client)
         {
-            // Always read the first 2 bytes to find out what type of message was received.
-            var request = new NetworkPacket(data);
-            Debug.Log($"[{DateTime.Now}] [Server] Client Message: {request.type}");
             
-            if (OP.ClientConnect == request.type)
-            {                       
-                var response = new NetworkPacket(OP.ClientConnect);
-                base.SendPacketByID(clientID, response, QosType.Reliable);
-            }
-//            byte[] buffer = new byte[size - 2];
-//            Buffer.BlockCopy(data, 2, buffer, 0, size - 2);
-//            var packet = new NetworkPacket(client, buffer);
-//            
-//            eventManager.Publish(type, packet);
-        }
+            // Game logic works off entity ID's, use IDs for everything past this point
+            var clientID = Identity.GetID();
+            gameClients.TryAdd(client, clientID);
+            gameClientIDs.TryAdd(clientID, client);
 
-        public override void OnClientConnected(RemoteClient client)
-        {
-            
             #if !UNITY_EDITOR
-            Debug.Log($"[{DateTime.Now}] [Server] Client Connected");
+                Debug.Log($"[{DateTime.Now}] [Server] Client Connected");
             #endif
         }
 
-        public override void OnClientConnectedByID(long clientID)
-        {
-            throw new NotImplementedException();
+        protected override void OnClientDisconnected(RemoteClient client)
+        {            
+            gameClients.TryRemove(client, out var clientID);
+            gameClientIDs.TryRemove(clientID, out _);
         }
-
-        public override void OnClientDisconnected(RemoteClient client)
-        {
-            #if !UNITY_EDITOR
-            Debug.Log($"[{DateTime.Now}] [Server] Client Disconnected");
-            #endif
-        }
-
-        public override void OnClientDisconnectedByID(long clientID)
-        {
-            throw new NotImplementedException();
-        }
+              
     }
 }

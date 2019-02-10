@@ -31,31 +31,23 @@ namespace Server.Network
     public abstract class NetcodeServerBehaviour : MonoBehaviour
     {	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
-	    private ConcurrentDictionary<long, RemoteClient> _clientLookup;
-	    private ConcurrentDictionary<RemoteClient, long> _clientIDLookup;
 	    private NetcodeServer _server;
 	    
-	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
-	    public abstract void OnServerReceiveMessageByID(long clientID, byte[] data, int size);
-	    public abstract void OnClientConnected(RemoteClient client);
-	    public abstract void OnClientConnectedByID(long clientID);
-	    public abstract void OnClientDisconnected(RemoteClient client);
-	    public abstract void OnClientDisconnectedByID(long clientID);
-	 	    
-	    void Start()
+	    protected abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
+	    protected abstract void OnClientConnected(RemoteClient client);
+	    protected abstract void OnClientDisconnected(RemoteClient client);
+	    
+	    public void Start()
 	    {
-		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
-		    _clientLookup = new ConcurrentDictionary<long, RemoteClient>();
-		    _clientIDLookup = new ConcurrentDictionary<RemoteClient, long>();
+		    Init();
 	    }
 
-	    public void StartServer(ServerConfig config)
+	    protected void Init()
 	    {
-		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
-		    Debug.Log($"{GenerateToken(config)}");
+		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
 	    }
-	    
-	    public void StartServer(string ipAddress, int port, ulong protocolID, int maxClients, byte[] privateKey)
+
+	    protected void StartServer(string ipAddress, int port, ulong protocolID, int maxClients, byte[] privateKey)
 	    {
 		    try
 		    {
@@ -77,20 +69,24 @@ namespace Server.Network
 
 	    private void ClientConnected(RemoteClient client)
 	    {
-
-		    var id = Identity.GetID();
-			_clientLookup.TryAdd(id, client);
-			_clientIDLookup.TryAdd(client, id);
-			
 			var endpoint = new ReliableEndpoint();			
 			_clients.TryAdd(client, endpoint);
 
-		    OnClientConnectedByID(id);
+		    OnClientConnected(client);
 	    }
 
 	    private void ClientDisconnected(RemoteClient client)
-	    {
+	    {	   
 		    OnClientDisconnected(client);
+		    
+		    //Remote Remote Client from Collection
+		    _clients.TryRemove(client, out _);		    
+	    }
+
+	    protected void DisconnectClient(RemoteClient client)
+	    {
+		    _server.Disconnect(client);
+		    _clients.TryRemove(client, out _);
 	    }
 	    
 	    private void ReceivePacket(RemoteClient client, ByteBuffer packet)
@@ -107,11 +103,8 @@ namespace Server.Network
 				#if UNITY_EDITOR		    
 				Debug.Log($"{DateTime.Now} [Server] Sent {(OP)BitConverter.ToInt32(data, 0)} to client {client.ClientID}");
 				#endif
-
-			    if (GetClientID(client, out var clientID))
-			    {
-				    OnServerReceiveMessageByID(clientID, data, size);
-			    }
+			    
+			    OnServerReceiveMessage(client, data, size);
 		    };
 		    
 
@@ -138,41 +131,7 @@ namespace Server.Network
 		    
 		    endpoint.SendMessage(payload, payloadSize, type);
 	    }
-	    
-	    protected void SendPacket(RemoteClient client, NetworkPacket packet, QosType type)
-	    {
-		    if (!_clients.TryGetValue(client, out var endpoint)) return;
-		    endpoint.Update();
-		    
-		    endpoint.TransmitCallback = ( data, size ) =>
-		    {			    		
-			    ByteBuffer buffer = BufferPool.GetBuffer(size);
-			    buffer.BufferCopy(data, 0, 0, size);
-			    _server.SendPayload(client, buffer );
-			    
-			    //_server.SendPayload(client, data, size );
-		    };
-		    
-		    #if UNITY_EDITOR		    
-		    Debug.Log($"{DateTime.Now} [Server] Sent {packet.type} to client {client.ClientID}");
-		    #endif
-		    
-		    endpoint.SendMessage(packet.data, packet.length, type);
-	    }
-
-	    protected void SendPacketByID(long clientID, NetworkPacket packet, QosType type)
-	    {
-		    if (GetClientByID(clientID, out var client))
-		    {
-			    SendPacket(client, packet, type);
-		    }
-		    else
-		    {
-			    Debug.LogError($"{DateTime.Now} [Server] Could not find client for ID {clientID}");
-		    }
-			
-	    }
-	    
+	    	    
 		public void OnDestroy()
 		{
 			DestroyServer();
@@ -182,16 +141,6 @@ namespace Server.Network
 	    {
 		    if (_server != null)
 			    _server.Dispose();
-	    }
-
-	    protected bool GetClientByID(long id, out RemoteClient client)
-	    {
-		    return _clientLookup.TryGetValue(id, out client);
-	    }
-	    
-	    protected bool GetClientID(RemoteClient client, out long clientID)
-	    {
-		    return _clientIDLookup.TryGetValue(client, out clientID);
 	    }
 	    
 	    public string GenerateToken(ServerConfig config)

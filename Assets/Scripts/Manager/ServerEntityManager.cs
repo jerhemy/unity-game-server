@@ -56,13 +56,10 @@ namespace Server.Manager
         
         // Start is called before the first frame update
         void Start()
-        {
-    
-            
+        {          
             if (_entity == null)
             {
-                _entity = new ConcurrentDictionary<long, EntityGO>();
-                
+                _entity = new ConcurrentDictionary<long, EntityGO>();               
                 activeContainer = new GameObject("Active");
                 activeContainer.transform.position = new Vector3(0,0,0);
                 activeContainer.transform.parent = transform;                     
@@ -145,14 +142,13 @@ namespace Server.Manager
             }
         }
             
-        public void CreatePlayer(long id, NetworkPacket client)
+        public void CreatePlayer(NetworkPacket client)
         {
-
             var x = new Mob();
             var go = GetFreeObject();
             go.AddEntity(x);
             
-            _entity.TryAdd(id, go);
+            //_entity.TryAdd(id, go);
                 
             go.Spawn();
             
