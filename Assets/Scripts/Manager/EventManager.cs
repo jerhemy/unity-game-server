@@ -1,75 +1,53 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using Net;
-using UnityEngine;
+using Server.Interface;
 
-public class EventManager
+namespace Server.Network
 {
-    private Dictionary<OP_CODE, Action<NetworkPacket>> _events;
-    
-    private static EventManager eventManager;
-
-    public static EventManager instance
+    public class EntityEventManager
     {
-        get
+        private static Dictionary<string, Action<IEntity>> entityEvent = new Dictionary<string, Action<IEntity>>();
+        
+        public static void Subscribe(string eventName, Action<IEntity> listener)
         {
-            if (eventManager != null)
+            Action<IEntity> thisEvent;
+            if (entityEvent.TryGetValue(eventName, out thisEvent))
             {
-                eventManager = new EventManager();                
+                //Add more event to the existing one
+                thisEvent += listener;
+
+                //Update the Dictionary
+                entityEvent[eventName] = thisEvent;
             }
-            return eventManager;
+            else
+            {
+                //Add event to the Dictionary for the first time
+                thisEvent += listener;
+                entityEvent.Add(eventName, thisEvent);
+            }
         }
-    }
 
-    private EventManager()
-    {
-        if (_events == null)
+        public static void Unsubscribe(string eventName, Action<IEntity> listener)
         {
-            _events = new Dictionary<OP_CODE, Action<NetworkPacket>>();
+            Action<IEntity> thisEvent;
+            if (entityEvent.TryGetValue(eventName, out thisEvent))
+            {
+                //Remove event from the existing one
+                thisEvent -= listener;
+
+                //Update the Dictionary
+                entityEvent[eventName] = thisEvent;
+            }
         }
-    }
 
-    public void Subscribe(OP_CODE eventName, Action<NetworkPacket> listener)
-    {
-        Action<NetworkPacket> thisEvent;
-        if (instance._events.TryGetValue(eventName, out thisEvent))
+        public static void Publish(string eventName, IEntity entity)
         {
-            //Add more event to the existing one
-            thisEvent += listener;
-
-            //Update the Dictionary
-            instance._events[eventName] = thisEvent;
-        }
-        else
-        {
-            //Add event to the Dictionary for the first time
-            thisEvent += listener;
-            instance._events.Add(eventName, thisEvent);
-        }
-    }
-
-    public void Unsubscribe(OP_CODE eventName, Action<NetworkPacket> listener)
-    {
-        if (eventManager == null) return;
-        Action<NetworkPacket> thisEvent;
-        if (instance._events.TryGetValue(eventName, out thisEvent))
-        {
-            //Remove event from the existing one
-            thisEvent -= listener;
-
-            //Update the Dictionary
-            instance._events[eventName] = thisEvent;
-        }
-    }
-
-    public void Publish(OP_CODE eventName, NetworkPacket eventParam)
-    {
-        Action<NetworkPacket> thisEvent = null;
-        if (instance._events.TryGetValue(eventName, out thisEvent))
-        {
-            thisEvent.Invoke(eventParam);
-            // OR USE  instance.eventDictionary[eventName](eventParam);
+            Action<IEntity> thisEvent = null;
+            if (entityEvent.TryGetValue(eventName, out thisEvent))
+            {
+                thisEvent.Invoke(entity);
+                // OR USE  instance.eventDictionary[eventName](eventParam);
+            }
         }
     }
 }

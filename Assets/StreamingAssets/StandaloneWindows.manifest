@@ -1,0 +1,10 @@
+ManifestFileVersion: 0
+CRC: 512818218
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: rivervale
+      Dependencies: {}
+    Info_1:
+      Name: greatforge
+      Dependencies: {}

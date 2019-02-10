@@ -1,4 +1,4 @@
-namespace Entities
+namespace Server.Entities
 {
     /// <summary>
     /// Definition for each specific spawn for for a mob in an instance.

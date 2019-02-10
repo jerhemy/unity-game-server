@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using Server.Interface;
 
-namespace MMO.Entity.AI
+namespace Entities.AI
 {
     [RequireComponent(typeof(NavMeshAgent))]
     public class WanderingAI : MonoBehaviour
     {
 
-        private EntityGO eGo;
+        private IEntityGO eGo;
         
         public float wanderRadius = 100;
         public float wanderTimer = 10;
@@ -18,7 +19,7 @@ namespace MMO.Entity.AI
 
         void Awake()
         {
-            eGo = gameObject.GetComponent<EntityGO>();
+            eGo = gameObject.GetComponent<IEntityGO>();
         }
         // Use this for initialization
         void OnEnable () {

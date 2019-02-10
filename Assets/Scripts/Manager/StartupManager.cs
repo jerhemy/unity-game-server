@@ -4,102 +4,103 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Entities;
-using Net;
-using Server.Net;
+using Server.Entities;
+using Server.Network;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-
-public class StartupManager : MonoBehaviour
+namespace Server.Manager
 {
-    public static AssetBundle BaseSceneBundle;
-    public static List<string> BaseScenePaths;
-    
-    private static ServerConfig serverConfig;
-    
-    public static StartupManager instance;
-    
-    void Awake()
+    public class StartupManager : MonoBehaviour
     {
-        //Check if instance already exists
-        if (instance == null)
-                
-            //if not, set instance to this
-            instance = this;
-            
-        //If instance already exists and it's not this:
-        else if (instance != this)
-                
-            //Then destroy this. This enforces our singleton pattern, meaning there can only ever be one instance of a GameManager.
-            Destroy(gameObject);    
-            
-        //Sets this to not be destroyed when reloading scene
-        DontDestroyOnLoad(gameObject);
-    }
-    
-    // Start is called before the first frame update
-    void Start()
-    {
+        public static AssetBundle BaseSceneBundle;
+        public static List<string> BaseScenePaths;
 
-        // Load JSON Config
-        LoadConfig();
-              
-        #if UNITY_STANDALONE_OSX
-        BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneOSXUniversal/{serverConfig.zone}");
-        #elif UNITY_STANDALONE       
-        BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
-        #endif
-        
-        BaseScenePaths = BaseSceneBundle.GetAllScenePaths().ToList();
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        SceneManager.LoadScene(BaseScenePaths[0]);
-    }
+        private static ServerConfig serverConfig;
 
-    private static void LoadConfig()
-    {  
-        var m_Path = Application.dataPath;
-        //Debug.Log($"Path: {m_Path}");
-        try
+        public static StartupManager instance;
+
+        void Awake()
         {
-            using (StreamReader r = new StreamReader($"{m_Path}/config.json"))
+            //Check if instance already exists
+            if (instance == null)
+
+                //if not, set instance to this
+                instance = this;
+
+            //If instance already exists and it's not this:
+            else if (instance != this)
+
+                //Then destroy this. This enforces our singleton pattern, meaning there can only ever be one instance of a GameManager.
+                Destroy(gameObject);
+
+            //Sets this to not be destroyed when reloading scene
+            DontDestroyOnLoad(gameObject);
+        }
+
+        // Start is called before the first frame update
+        void Start()
+        {
+
+            // Load JSON Config
+            LoadConfig();
+
+            #if UNITY_STANDALONE_OSX
+                BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneOSXUniversal/{serverConfig.zone}");
+            #elif UNITY_STANDALONE
+                BaseSceneBundle = AssetBundle.LoadFromFile($"AssetBundles/StandaloneWindows/{serverConfig.zone}");
+            #endif
+
+            Debug.Log($"{DateTime.Now} [Instance Server] Scene Bundle Loaded");
+            BaseScenePaths = BaseSceneBundle.GetAllScenePaths().ToList();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.LoadScene(BaseScenePaths[0]);
+        }
+
+        private static void LoadConfig()
+        {
+            var m_Path = Application.dataPath;
+            //Debug.Log($"Path: {m_Path}");
+            try
             {
-                string json = r.ReadToEnd();
-                serverConfig = JsonUtility.FromJson<ServerConfig>(json);
-                Debug.Log($"ZoneID: {serverConfig.zone}");
-                Debug.Log($"IP: {serverConfig.ip}");
-                Debug.Log($"Port: {serverConfig.port}");
-                Debug.Log($"PrivateKey: {serverConfig.privateKey}");
-                
-                var keyLength = serverConfig.privateKey.Length == 16;
-                //Debug.Assert(keyLength, "Invalid privateKey length");             
+                using (StreamReader r = new StreamReader($"{m_Path}/config.json"))
+                {
+                    string json = r.ReadToEnd();
+                    serverConfig = JsonUtility.FromJson<ServerConfig>(json);
+                    Debug.Log($"ZoneID: {serverConfig.zone}");
+                    Debug.Log($"IP: {serverConfig.ip}");
+                    Debug.Log($"Port: {serverConfig.port}");
+                    Debug.Log($"PrivateKey: {serverConfig.privateKey}");          
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex);
             }
         }
-        catch (Exception ex)
-        {
-            Debug.Log(ex);
-        }
-    }
 
-    private void LoadEntities()
-    {
-        List<Entity> mobs = new List<Entity>();
-        for (int x = 0; x < 100; x++)
+        private void LoadEntities()
         {
-            mobs.Add(new Mob());
+            List<Entity> mobs = new List<Entity>();
+            for (int x = 0; x < 100; x++)
+            {
+                mobs.Add(new Mob());
+            }
+            
+            ServerEntityManager.instance.AddEntity(mobs);
         }
-        
-        ServerEntityManager.instance.AddEntity(mobs);
-    }
-    
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == serverConfig.zone)
+
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            LoadEntities();
-            //baseServer.StartServer(serverConfig);
-            var instanceServer = gameObject.AddComponent<InstanceServer>();
-            instanceServer.StartServer(serverConfig);
+            Debug.Log($"{DateTime.Now} [Instance Server] Loaded Scene {scene.name}");
+            
+            if (scene.name == serverConfig.zone)
+            {
+                LoadEntities();
+                //baseServer.StartServer(serverConfig);
+                var instanceServer = gameObject.AddComponent<InstanceServer>();
+                instanceServer.StartServer(serverConfig);               
+            }
         }
     }
 }

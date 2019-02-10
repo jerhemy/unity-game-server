@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Entities
+namespace Server.Entities
 {
     public class Mob : Entity
     {

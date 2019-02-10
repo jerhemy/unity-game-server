@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
-using Net;
 using NetcodeIO.NET;
 using ReliableNetcode;
 using UnityEngine;
 using UnityNetcodeIO;
+using Utils;
 
-namespace Server.Net
+namespace Server.Network
 {
 	public class ServerConfig
 	{
@@ -18,11 +18,8 @@ namespace Server.Net
 		public int port;
 		public ulong protocolId;
 		public int maxClients;
-
 		public string privateKey;
 
-		
-		
 		public byte[] GetKey()
 		{
 			var pkey = privateKey.Substring(0, 16);
@@ -32,37 +29,25 @@ namespace Server.Net
 	}
 	
     public abstract class NetcodeServerBehaviour : MonoBehaviour
-    {
-
-        byte[] privateKey = new byte[]
-        {
-          0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
-          0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
-          0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
-          0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1
-        };
-	    
+    {	    
 	    private ConcurrentDictionary<RemoteClient, ReliableEndpoint> _clients;
-	    private ConcurrentDictionary<long, RemoteClient> _clientLookup;
 	    private NetcodeServer _server;
 	    
-	    public abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
-	    public abstract void OnClientConnected(RemoteClient client);
-	    public abstract void OnClientDisconnected(RemoteClient client);
-	 	    
-	    void Start()
+	    protected abstract void OnServerReceiveMessage(RemoteClient client, byte[] data, int size);
+	    protected abstract void OnClientConnected(RemoteClient client);
+	    protected abstract void OnClientDisconnected(RemoteClient client);
+	    
+	    public void Start()
 	    {
-		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
-		    _clientLookup = new ConcurrentDictionary<long, RemoteClient>();
+		    Init();
 	    }
 
-	    public void StartServer(ServerConfig config)
+	    protected void Init()
 	    {
-		    StartServer(config.ip, config.port, config.protocolId, config.maxClients, config.GetKey());
-		    Debug.Log($"{GenerateToken(config)}");
+		    _clients = new ConcurrentDictionary<RemoteClient, ReliableEndpoint>();
 	    }
-	    
-	    public void StartServer(string ipAddress, int port, ulong protocolID, int maxClients, byte[] privateKey)
+
+	    protected void StartServer(string ipAddress, int port, ulong protocolID, int maxClients, byte[] privateKey)
 	    {
 		    try
 		    {
@@ -84,10 +69,6 @@ namespace Server.Net
 
 	    private void ClientConnected(RemoteClient client)
 	    {
-		    
-			var id = DateTime.UtcNow.Ticks;
-			_clientLookup.TryAdd(id, client);
-			
 			var endpoint = new ReliableEndpoint();			
 			_clients.TryAdd(client, endpoint);
 
@@ -95,8 +76,17 @@ namespace Server.Net
 	    }
 
 	    private void ClientDisconnected(RemoteClient client)
-	    {
+	    {	   
 		    OnClientDisconnected(client);
+		    
+		    //Remote Remote Client from Collection
+		    _clients.TryRemove(client, out _);		    
+	    }
+
+	    protected void DisconnectClient(RemoteClient client)
+	    {
+		    _server.Disconnect(client);
+		    _clients.TryRemove(client, out _);
 	    }
 	    
 	    private void ReceivePacket(RemoteClient client, ByteBuffer packet)
@@ -114,7 +104,7 @@ namespace Server.Net
 				Debug.Log($"{DateTime.Now} [Server] Sent {(OP)BitConverter.ToInt32(data, 0)} to client {client.ClientID}");
 				#endif
 			    
-			    OnServerReceiveMessage( client, data, size );
+			    OnServerReceiveMessage(client, data, size);
 		    };
 		    
 
@@ -124,7 +114,6 @@ namespace Server.Net
 	    /// <summary>
 	    /// Sends data to the Game Server
 	    /// </summary>
-	    
 	    protected void Send(RemoteClient client, byte[] payload, int payloadSize, QosType type)
 	    {
 		    if (!_clients.TryGetValue(client, out var endpoint)) return;
@@ -142,28 +131,7 @@ namespace Server.Net
 		    
 		    endpoint.SendMessage(payload, payloadSize, type);
 	    }
-	    
-	    protected void SendPacket(RemoteClient client, NetworkPacket packet, QosType type)
-	    {
-		    if (!_clients.TryGetValue(client, out var endpoint)) return;
-		    endpoint.Update();
-		    
-		    endpoint.TransmitCallback = ( data, size ) =>
-		    {			    		
-			    ByteBuffer buffer = BufferPool.GetBuffer(size);
-			    buffer.BufferCopy(data, 0, 0, size);
-			    _server.SendPayload(client, buffer );
-			    
-			    //_server.SendPayload(client, data, size );
-		    };
-		    
-		    #if UNITY_EDITOR		    
-		    Debug.Log($"{DateTime.Now} [Server] Sent {packet.type} to client {client.ClientID}");
-		    #endif
-		    
-		    endpoint.SendMessage(packet.data, packet.length, type);
-	    }
-	    
+	    	    
 		public void OnDestroy()
 		{
 			DestroyServer();
@@ -174,7 +142,7 @@ namespace Server.Net
 		    if (_server != null)
 			    _server.Dispose();
 	    }
-
+	    
 	    public string GenerateToken(ServerConfig config)
 	    {
 		    var token = GenerateToken(config.protocolId, config.privateKey, config.ip, config.port);

@@ -1,4 +1,4 @@
-namespace Net
+namespace Server.Network
 {
     public enum OP
     {
@@ -9,7 +9,7 @@ namespace Net
         
         ServerChangeScene = 0x03E7,
         // 1000
-        ServerAddEntity = 0x03E8,
+        ServerSpawnEntity = 0x03E8,
         ServerRemoveEntity = 0x03E9,
         ServerUpdateEntity = 0x03EA
     }

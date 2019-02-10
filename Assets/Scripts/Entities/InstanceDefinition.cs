@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Server.Net;
 
 namespace NetcodeIO.NET
 {
